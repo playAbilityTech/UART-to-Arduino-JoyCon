@@ -79,6 +79,35 @@ uint8_t check_rx_buffer() {
   return 0;
 }
 
+// MIDI
+typedef struct {
+  int8_t type;
+  int8_t velocity;
+} midi_t;
+
+midi_t note;
+#define FRAME_SIZE_MIDI (3)
+
+uint8_t midi_buffer[FRAME_SIZE_MIDI];
+uint8_t midi_buffer_index = 0;
+
+void push_midi_buffer(uint8_t d) {
+  midi_buffer[midi_buffer_index] = d;
+  midi_buffer_index = (midi_buffer_index+1) % FRAME_SIZE_MIDI;
+}
+
+uint8_t get_midi_buffer(uint8_t i) {
+  return (midi_buffer[(i + midi_buffer_index) % FRAME_SIZE_MIDI]);
+}
+
+uint8_t check_midi_buffer() {
+  uint8_t crc = 0;
+  if (get_midi_buffer(0) == 144) {
+    return 1;
+  }
+  return 0;
+}
+
 void getSerialData() {
   if (Serial1.available()) {
     char c = Serial1.read();
@@ -93,6 +122,20 @@ void getSerialData() {
         ptr[i] = get_rx_buffer(i+1);
     }
 
+    push_midi_buffer(c);
+    if (check_midi_buffer()) {
+      Serial.print(" MIDI:");
+      for (int i = 0; i <= sizeof(FRAME_SIZE_MIDI); i++) {
+        Serial.print((byte) get_midi_buffer(i));
+        Serial.print(",");
+      }
+      Serial.println("END\n");
+
+      uint8_t *ptrm = (uint8_t *)&note;
+      for (int i = 0; i < sizeof(note); i++) {
+        ptrm[i] = (byte) get_midi_buffer(i+1);
+      }
+    }
   }
 }
 
@@ -218,6 +261,22 @@ void loop() {
 
     for (uint8_t i=0; i<sizeof(gamepad.button); i++) {
       Joystick.setButton(i, gamepad.button[i]);
+    }
+
+    switch (note.type) {
+      case 108:
+        if(note.velocity >= 127) {
+          Joystick.pressButton(0); // X
+        }
+        break;
+      case 109:
+        if(note.velocity >= 127) {
+          Joystick.pressButton(2); // A
+        }
+        break;
+      default:
+        // statements
+        break;
     }
 
     if (!digitalRead(14)) {
