@@ -1,4 +1,4 @@
-// Program used to test the Nintento Switch Joystick with UART on a
+// Program used to test the Nintento Switch Joystick with UART on the
 // Arduino Leonardo or Arduino Micro.
 //
 // Jorand for Hackerloop
@@ -233,8 +233,6 @@ void setup(){
     fail();
   }
 }
-
-uint16_t test = 0;
 
 void loop() {
   getSerialData();

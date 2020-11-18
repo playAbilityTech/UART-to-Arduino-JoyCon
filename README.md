@@ -13,6 +13,9 @@ In the `/client` folder.
 ### Arduino
 Falsh the `.ino` file on a Arduino Leonardo,  Arduino Micro or ATmega32U4 based microcontroller.
 
+## Thanks to
+ - [spectrenoir06](https://github.com/spectrenoir06)
+
 ## Todo
 - Input Protocol
   - [x] UART
