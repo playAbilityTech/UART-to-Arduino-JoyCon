@@ -19,4 +19,3 @@ Falsh the `.ino` file on a Arduino Leonardo,  Arduino Micro or ATmega32U4 based 
 ## Todo
 - Input Protocol
   - [x] UART
-  - [ ] MIDI Serial Bridge (Hairless MIDI)

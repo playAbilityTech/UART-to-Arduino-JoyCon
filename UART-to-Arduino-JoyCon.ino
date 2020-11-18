@@ -1,4 +1,4 @@
-// Program used to test the Nintento Switch Joystick with UART on the
+// Program used to test the Nintento Switch Joystick object on the
 // Arduino Leonardo or Arduino Micro.
 //
 // Jorand for Hackerloop
@@ -11,6 +11,9 @@
 #include "SwitchJoystick.h"
 
 SwitchJoystick_ Joystick;
+
+// MPU6050
+//----------------------------------
 
 MPU6050 mpu;
 
@@ -44,100 +47,6 @@ int leftJoyY = 128;
 
 unsigned long onTime = 0;
 unsigned long releaseTime = 0;
-
-// SERIAL
-typedef struct {
-  uint8_t button[16];
-  int8_t analog[4];
-  int8_t hat[1];
-  uint8_t mode = 0;
-} gamepad_t;
-
-gamepad_t gamepad;
-
-uint32_t timer = 0;
-
-#define FRAME_SIZE_RX (sizeof(gamepad)+2)
-
-uint8_t rx_buffer[FRAME_SIZE_RX];
-uint8_t rx_buffer_index = 0;
-
-void push_rx_buffer(uint8_t d) {
-  rx_buffer[rx_buffer_index] = d;
-  rx_buffer_index = (rx_buffer_index+1) % FRAME_SIZE_RX;
-}
-
-uint8_t get_rx_buffer(uint8_t i) {
-  return (rx_buffer[(i + rx_buffer_index) % FRAME_SIZE_RX]);
-}
-
-uint8_t check_rx_buffer() {
-  uint8_t crc = 0;
-  if (get_rx_buffer(0) == 42 && get_rx_buffer(sizeof(gamepad)+1) == 43) {
-    return 1;
-  }
-  return 0;
-}
-
-// MIDI
-typedef struct {
-  int8_t type;
-  int8_t velocity;
-} midi_t;
-
-midi_t note;
-#define FRAME_SIZE_MIDI (3)
-
-uint8_t midi_buffer[FRAME_SIZE_MIDI];
-uint8_t midi_buffer_index = 0;
-
-void push_midi_buffer(uint8_t d) {
-  midi_buffer[midi_buffer_index] = d;
-  midi_buffer_index = (midi_buffer_index+1) % FRAME_SIZE_MIDI;
-}
-
-uint8_t get_midi_buffer(uint8_t i) {
-  return (midi_buffer[(i + midi_buffer_index) % FRAME_SIZE_MIDI]);
-}
-
-uint8_t check_midi_buffer() {
-  uint8_t crc = 0;
-  if (get_midi_buffer(0) == 144) {
-    return 1;
-  }
-  return 0;
-}
-
-void getSerialData() {
-  if (Serial1.available()) {
-    char c = Serial1.read();
-    Serial.print(c, HEX);
-    Serial.print(",");
-
-    push_rx_buffer(c);
-    if (check_rx_buffer()) {
-      Serial.println(" RX:END\n");
-      uint8_t *ptr = (uint8_t *)&gamepad;
-      for (int i = 0; i < sizeof(gamepad); i++)
-        ptr[i] = get_rx_buffer(i+1);
-    }
-
-    push_midi_buffer(c);
-    if (check_midi_buffer()) {
-      Serial.print(" MIDI:");
-      for (int i = 0; i <= sizeof(FRAME_SIZE_MIDI); i++) {
-        Serial.print((byte) get_midi_buffer(i));
-        Serial.print(",");
-      }
-      Serial.println("END\n");
-
-      uint8_t *ptrm = (uint8_t *)&note;
-      for (int i = 0; i < sizeof(note); i++) {
-        ptrm[i] = (byte) get_midi_buffer(i+1);
-      }
-    }
-  }
-}
 
 void getIMUData() {
   if (!dmpReady) return;
@@ -174,6 +83,60 @@ void getIMUData() {
     leftJoyY = constrain(leftJoyY, 0, 255);
   }
 }
+
+
+// SERIAL UART
+//----------------------------------
+
+typedef struct {
+  uint8_t button[16];
+  int8_t analog[4];
+  int8_t hat[1];
+  uint8_t mode = 0;
+} gamepad_t;
+
+gamepad_t gamepad;
+
+uint32_t timer = 0;
+
+#define FRAME_SIZE_RX (sizeof(gamepad)+2)
+
+uint8_t rx_buffer[FRAME_SIZE_RX];
+uint8_t rx_buffer_index = 0;
+
+void push_rx_buffer(uint8_t d) {
+  rx_buffer[rx_buffer_index] = d;
+  rx_buffer_index = (rx_buffer_index+1) % FRAME_SIZE_RX;
+}
+
+uint8_t get_rx_buffer(uint8_t i) {
+  return (rx_buffer[(i + rx_buffer_index) % FRAME_SIZE_RX]);
+}
+
+uint8_t check_rx_buffer() {
+  uint8_t crc = 0;
+  if (get_rx_buffer(0) == 42 && get_rx_buffer(sizeof(gamepad)+1) == 43) {
+    return 1;
+  }
+  return 0;
+}
+
+void getSerialData() {
+  if (Serial1.available()) {
+    char c = Serial1.read();
+    Serial.print(c, HEX);
+    Serial.print(",");
+    
+    push_rx_buffer(c);
+    if (check_rx_buffer()) {
+      Serial.println(" RX:END\n");
+      uint8_t *ptr = (uint8_t *)&gamepad; 
+      for (int i = 0; i < sizeof(gamepad); i++)
+        ptr[i] = get_rx_buffer(i+1);
+    }
+  }
+}
+
 
 void fail() {
   while (1) {
@@ -250,31 +213,15 @@ void loop() {
       rollOffset = ypr[2];
     }
   }
-
+  
 
   // USB
 
   if (millis() > timer) {
     timer = millis() + 10; // 10 ms = 1/0.010 == 100Hz
-
+   
     for (uint8_t i=0; i<sizeof(gamepad.button); i++) {
       Joystick.setButton(i, gamepad.button[i]);
-    }
-
-    switch (note.type) {
-      case 108:
-        if(note.velocity >= 127) {
-          Joystick.pressButton(0); // X
-        }
-        break;
-      case 109:
-        if(note.velocity >= 127) {
-          Joystick.pressButton(2); // A
-        }
-        break;
-      default:
-        // statements
-        break;
     }
 
     if (!digitalRead(14)) {
@@ -293,7 +240,7 @@ void loop() {
       Joystick.pressButton(10); // Lstick
     }
 
-    if (gamepad.mode == 2) {
+    if (gamepad.mode == 1) {
       Joystick.setXAxis(gamepad.analog[0]);
       Joystick.setYAxis(gamepad.analog[1]);
     }
