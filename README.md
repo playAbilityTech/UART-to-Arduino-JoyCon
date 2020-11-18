@@ -2,9 +2,6 @@
 Program used to test the Nintento Switch Arduino Joystick with a UART interface.
 
 ## Dependencies
-  - You need to install [Löve](https://love2d.org/#download)
-
-## Dependencies
  - You need to install [SwitchJoystick](https://github.com/HackerLoop/Arduino-JoyCon-Library-for-Nintendo-Switch)
 
 ## Usage
