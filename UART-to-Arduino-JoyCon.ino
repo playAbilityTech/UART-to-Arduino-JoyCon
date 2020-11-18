@@ -121,6 +121,44 @@ uint8_t check_rx_buffer() {
   return 0;
 }
 
+
+// SERIAL MIDI
+//----------------------------------
+
+typedef struct {
+  int8_t channel;
+  int8_t type;
+  int8_t note;
+  int8_t velocity;
+} midi_t;
+
+midi_t midi;
+#define FRAME_SIZE_MIDI (3)
+
+uint8_t midi_buffer[FRAME_SIZE_MIDI];
+uint8_t midi_buffer_index = 0;
+
+void push_midi_buffer(uint8_t d) {
+  midi_buffer[midi_buffer_index] = d;
+  midi_buffer_index = (midi_buffer_index+1) % FRAME_SIZE_MIDI;
+}
+
+uint8_t get_midi_buffer(uint8_t i) {
+  return (midi_buffer[(i + midi_buffer_index) % FRAME_SIZE_MIDI]);
+}
+
+uint8_t check_midi_buffer() {
+  uint8_t crc = 0;
+  if (get_midi_buffer(0) & 0b10000000) {
+    return 1;
+  }
+  return 0;
+}
+
+
+// SERIAL
+//----------------------------------
+
 void getSerialData() {
   if (Serial1.available()) {
     char c = Serial1.read();
@@ -129,10 +167,40 @@ void getSerialData() {
     
     push_rx_buffer(c);
     if (check_rx_buffer()) {
-      Serial.println(" RX:END\n");
+      Serial.println(" RX:END");
       uint8_t *ptr = (uint8_t *)&gamepad; 
       for (int i = 0; i < sizeof(gamepad); i++)
         ptr[i] = get_rx_buffer(i+1);
+    }
+
+    push_midi_buffer(c);
+    if (check_midi_buffer()) {
+      Serial.print(" MIDI:");
+      for (int i = 0; i <= sizeof(FRAME_SIZE_MIDI); i++) {
+        Serial.print((byte) get_midi_buffer(i));
+        Serial.print(",");
+      }
+      Serial.print("END \t ");
+
+      if ((get_midi_buffer(0) & 0xF0) == 0x80) {
+        midi.type = 0;
+      } 
+      else if ((get_midi_buffer(0) & 0xF0) == 0x90){
+        midi.type = 1;
+      }
+
+      midi.channel = get_midi_buffer(0) & 0x0F;
+      midi.note = get_midi_buffer(1);
+      midi.velocity = get_midi_buffer(2);
+
+      Serial.print("[MIDI in] channel:");
+      Serial.print(midi.channel + 1);
+      Serial.print(" note:");
+      Serial.print(midi.note);
+      Serial.print(" type:");
+      Serial.print(midi.type);
+      Serial.print(" velocity:");
+      Serial.println(midi.velocity);
     }
   }
 }
@@ -148,6 +216,7 @@ void fail() {
 }
 
 void setup(){
+  Serial.begin(115200);
   Serial1.begin(115200);
   Joystick.begin(false);
 
@@ -222,6 +291,15 @@ void loop() {
    
     for (uint8_t i=0; i<sizeof(gamepad.button); i++) {
       Joystick.setButton(i, gamepad.button[i]);
+    }
+
+    switch (midi.note) {
+      case 36:
+        Joystick.setButton(1, midi.type);
+        break;
+      case 62:
+        Joystick.setButton(4, midi.type);
+        break;
     }
 
     if (!digitalRead(14)) {
