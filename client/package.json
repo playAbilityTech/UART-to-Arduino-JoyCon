@@ -1,0 +1,32 @@
+{
+  "name": "UART-to-Arduino-JoyCon-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HackerLoop/UART-to-Arduino-JoyCon.git"
+  },
+  "keywords": [
+    ""
+  ],
+  "author": "Jorand",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/HackerLoop/UART-to-Arduino-JoyCon/issues"
+  },
+  "homepage": "https://github.com/HackerLoop/UART-to-Arduino-JoyCon#readme",
+  "devDependencies": {
+    "dotenv": "^8.2.0",
+    "nodemon": "^2.0.4"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "jspack": "0.0.4",
+    "serialport": "^9.0.2"
+  }
+}
