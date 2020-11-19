@@ -9,6 +9,7 @@ Program used to test the Nintento Switch Arduino Joystick with a UART interface.
 In the `/client` folder.
 1. `npm install`
 2. `npm run dev` or `npm start`
+3. open `http://localhost:3000/`
 
 ### Arduino
 Falsh the `.ino` file on a Arduino Leonardo,  Arduino Micro or ATmega32U4 based microcontroller.

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UART 2 Switch Controller</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="controls">
+      <button-gamepad
+        v-for="(value, index) in map"
+        :callback="(state) => {
+          gamepad.button[value] = state;
+          updateGamepad();
+        }" :text="index">
+      </button-gamepad>
+      <br>
+      HAT : <br>
+      <table>
+        <tr>
+          <td></td>
+          <td>
+            <button-gamepad
+              :callback="(state) => {
+                gamepad.hat = state ? 0 : 255;
+                updateGamepad();
+              }" text="⇧">
+            </button-gamepad>
+          </td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>
+            <button-gamepad
+              :callback="(state) => {
+                gamepad.hat = state ? 6 : 255;
+                updateGamepad();
+              }" text="⇦">
+            </button-gamepad>
+          </td>
+          <td></td>
+          <td>
+            <button-gamepad
+              :callback="(state) => {
+                gamepad.hat = state ? 2 : 255;
+                updateGamepad();
+              }" text="⇨">
+            </button-gamepad>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>
+            <button-gamepad
+              :callback="(state) => {
+                gamepad.hat = state ? 4 : 255;
+                updateGamepad();
+                }" text="⇩">
+            </button-gamepad>
+          </td>
+          <td></td>
+        </tr>
+      </table>
+
+      <!-- <br><br>
+      <input type="checkbox" id="modeCheckbox" v-model="mode1">
+      <label for="modeCheckbox">Send JoyLeft</label>
+      <br>
+      <input class="range" type="range" min="0" max="255" step="1" v-model="joyLeftX" @input="joyLeftXChange">
+      <br>
+      <input class="range" type="range" min="0" max="255" step="1" v-model="joyLeftY" @input="joyLeftyChange"> -->
+    </div>
+    <div class="top">
+
+      <br>
+
+      <input type="checkbox" id="checkbox" v-model="serialChecked" @change="checkSerial($event)">
+      <label for="checkbox">Serial</label>
+
+      <br><br>
+
+      <label for="serialPort">Serial port</label>
+      <select id="serialPort" v-model="portSelected" @click="reloadPortList" @change="changeSerialPort($event)">
+        <option value="">(Not Connected)</option>
+        <option v-for="option in options" v-bind:value="option.path">
+          {{ option.manufacturer || "Port de communication" }} ({{ option.path }})
+        </option>
+      </select>
+
+      <br><br>
+
+      <!-- <input type="checkbox" id="debugCheckbox" v-model="serialDebug">
+      <label for="debugCheckbox">Debug UART messages</label> -->
+    </div>
+    <ul class="messages" ref="messagesContainer">
+      <li class="msg" v-for="(msg, index) in messages" :key="index">
+        {{msg}}
+        <p>{{ msg.message }}</p>
+      </li>
+    </ul>
+  </div>
+</body>
+
+<script>
+  var socket = io();
+  Vue.component('button-gamepad', {
+    props: {
+      'text': String,
+      'callback': { type: Function },
+    },
+    template: `
+      <button
+        class="button" type="button"
+        @mousedown="buttonClick(1)"
+        @mouseup="buttonClick(0)"
+        @touchstart="buttonTouch(1)"
+        @touchend="buttonTouch(0)">
+        {{text}}
+      </button>
+    `,
+    methods: {
+      buttonClick(state) {
+        if (!isTouchDevice) {
+          this.buttonState(state);
+        }
+      },
+      buttonTouch(state) {
+        if (isTouchDevice) {
+          this.buttonState(state);
+        }
+      },
+      buttonState(state) {
+        this.callback(state);
+      }
+    }
+  });
+  var app = new Vue({
+    el: '#app',
+    data: {
+      message: 'Hello Vue!',
+      portSelected: '',
+      serialChecked: true,
+      serialDebug: true,
+      options: [],
+      messages: [],
+      gamepad: {},
+      isTouchDevice: false,
+      joyLeftX: 128,
+      joyLeftY: 128,
+      mode1: false,
+      map: {},
+    },
+    created () {
+      window.onbeforeunload = () => {
+        socket.emit('leave', this.username);
+      }
+    },
+    mounted() {
+      isTouchDevice = 'ontouchstart' in document.documentElement;
+
+      // socket.on('message', function(obj){
+      //   console.log(obj);
+      // });
+
+      socket.on('CLEAR_MESSAGES', () => {
+        this.messages = [];
+      });
+
+      socket.on('MESSAGE', (data) => {
+        this.messages = data;
+      });
+
+      socket.on('PORT_LIST', (obj) => {
+        this.options = obj;
+        var exsist = this.options.filter((v) => {
+          return Object.values(v).includes(this.portSelected);
+        });
+        if (!exsist.length) {
+          this.portSelected = '';
+        }
+      });
+
+      socket.on('UPDATE_PORT', (port) => {
+        this.portSelected = port;
+      });
+
+      socket.on('GAMEPAD', (data) => {
+        this.gamepad = data;
+      });
+
+      socket.on('MAPPING', (data) => {
+        this.map = data;
+      });
+
+    },
+    updated() {
+      this.$nextTick(() => this.scrollToEnd());
+    },
+
+    watch:{
+      // serialDebug(newValue) {
+      //   localStorage.setItem("serialDebug", newValue);
+      // }
+    },
+
+    methods: {
+      send() {
+        socket.emit('message', {
+          message: "coucou"
+        });
+      },
+      sendButton(id) {
+        socket.emit('BUTTON', {
+          message: "coucou"
+        });
+      },
+      reloadPortList() {
+        socket.emit('GET_PORT_LIST');
+      },
+      changeSerialPort(e) {
+        socket.emit('CHANGE_SERIAL_PORT', this.portSelected);
+        if (!this.portSelected) {
+          socket.emit('CLOSE_SERIAL');
+        }
+        else if (this.serialChecked) {
+          socket.emit('OPEN_SERIAL');
+        }
+      },
+      checkSerial(e) {
+        if (this.serialChecked) {
+          if (this.portSelected) {
+            socket.emit('OPEN_SERIAL');
+          }
+        }
+        else {
+          socket.emit('CLOSE_SERIAL');
+        }
+      },
+      scrollToEnd() {
+        var content = this.$refs.messagesContainer;
+        content.scrollTop = content.scrollHeight;
+      },
+      updateGamepad() {
+        socket.emit('UPDATE_GAMEPAD', this.gamepad);
+      },
+      joyLeftXChange() {
+        if (this.mode1) {
+          this.gamepad.mode = 1;
+        }
+        this.gamepad.joyLeft.x = parseInt(this.joyLeftX);
+        socket.emit('UPDATE_GAMEPAD', this.gamepad);
+      },
+      joyLeftyChange() {
+        if (this.mode1) {
+          this.gamepad.mode = 1;
+        }
+        this.gamepad.joyLeft.y = parseInt(this.joyLeftY);
+        socket.emit('UPDATE_GAMEPAD', this.gamepad);
+      }
+    }
+  })
+</script>
+
+<style lang="scss" scoped>
+  html, body {
+    margin: 0; padding: 0;
+  }
+
+  *, *:before, *:after {
+    box-sizing: border-box;
+  }
+
+  #app {
+    height: 100vh;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .top {
+
+  }
+
+  #serialPort {
+    width: 300px;
+  }
+
+  .messages {
+    flex: 1;
+    min-height: 200px;
+    margin: 10px 0 0;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 10px 10px 0;
+    border: 1px solid black;
+    list-style: none;
+    font-size: 13px;
+    font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
+    white-space: nowrap;
+    line-height: .5em;
+  }
+
+  .msg {
+
+  }
+
+  .button {
+    min-width: 42px;
+    height: 42px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    user-select: none;
+  }
+
+  .range {
+    height: 40px;
+    width: 100%;
+  }
+</style>
+
+</html>

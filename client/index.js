@@ -1,8 +1,92 @@
 const express = require('express');
 const app = express();
+const http = require('http').Server(app);
+const io = require('socket.io')(http, {
+  pingInterval: 25000,
+  pingTimeout: 60000,
+});
+const bodyParser = require('body-parser');
+const cors = require('cors');
+
+const nconf = require('nconf');
+nconf.use('file', { file: './config.json' });
+nconf.load();
+
+// APP
+
+const PORT = 3000;
+let ip = require('ip').address();
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors());
+
+app.get('/', function (req, res) {
+  res.sendFile(__dirname + '/index.html');
+});
+
+io.on('connection', (socket) => {
+  console.log('a user connected');
+
+  socket.on('message', function(msg) {
+    console.log('message', msg);
+  });
+
+  socket.on('error', function(error) {
+    console.log('error', error);
+  });
+
+  socket.on('disconnect', (error) => {
+    console.log('user disconnected', error);
+  });
+
+  io.sockets.emit("GAMEPAD", gamepad);
+
+  socket.on('UPDATE_GAMEPAD', function(payload) {
+    sendToArduino(payload);
+  });
+
+  socket.on('CHANGE_SERIAL_PORT', function(port) {
+    arduinoPort = port;
+    saveConf();
+    io.sockets.emit("UPDATE_PORT", arduinoPort);
+  });
+
+  socket.on('OPEN_SERIAL', function() {
+    openSerial();
+  });
+
+  socket.on('CLOSE_SERIAL', function() {
+    closeSerial();
+  });
+
+  socket.on('GET_PORT_LIST', function() {
+    getPortList();
+  });
+
+  getPortList();
+
+  io.sockets.emit("MESSAGE", messages);
+
+  io.sockets.emit("UPDATE_PORT", arduinoPort);
+
+  io.sockets.emit("MAPPING", mapping);
+});
+
+var server = http.listen(PORT, () => {
+  console.log(`App running on port ${PORT}!`);
+  console.log(`listening to server on: http://${ip}:${PORT}`);
+});
+
+
+/*** SERIAL UART ***/
+
 const SerialPort = require("serialport");
 const jspack = require("jspack").jspack;
 
+const mapping = BTN = require('./mapping.js').switchProController;
+
+// UART package structre
 var gamepad = {
   button: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
   joyLeft: {
@@ -13,56 +97,89 @@ var gamepad = {
     x: 128,
     y: 128,
   },
-  hat: 0,
+  hat: 10,
   mode: 0,
 };
 
-const port = 3000;
+var arduinoPort = nconf.get('port') || '';
+var arduinoSerial = {};
 
-const arduinoCOMPort = "/dev/tty.SLAB_USBtoUART";
+const MAX_DEBUG_OUTPUT_LINES = 60;
+var messages = [];
 
-SerialPort.list().then(
-  ports => ports.forEach(port => console.log(port.path)),
-  err => console.error(err)
-)
-
-const arduinoSerialPort = new SerialPort(arduinoCOMPort, {
-  baudRate: 115200
-})
-
-arduinoSerialPort.on('open',function() {
-  console.log('Serial Port ' + arduinoCOMPort + ' is opened.');
-});
-
-app.get('/', function (req, res) {
-  return res.send('Working');
-})
-
-app.get('/button/:id', function (req, res) {
-  var id = req.params.id || req.param('id');
-
-  var result = pressButton(id);
-  return res.send(result);
-});
-
-app.listen(port, function () {
-  console.log('Example app listening on port http://0.0.0.0:' + port + '!');
-});
-
-function pressButton(id) {
-  if(gamepad.button[id] !== undefined) {
-    gamepad.button[id] = 1;
-    arduinoSerialPort.write(gamepad2String(gamepad));
-    setTimeout(() => {
-      gamepad.button[id] = 0;
-      arduinoSerialPort.write(gamepad2String(gamepad));
-    }, 500);
-
-    return `Button ${id} pressed !`;
+function closeSerial() {
+  if (arduinoSerial.isOpen) {
+    arduinoSerial.close();
   }
-  else {
-    return 'Wrong Button id !';
+}
+
+function openSerial() {
+  messages = [];
+  closeSerial();
+  if (!arduinoPort) return;
+  try {
+    sendLog('Opening port…');
+    arduinoSerial = new SerialPort(arduinoPort, {
+      baudRate: 115200,
+      stopBits: 2
+    });
+    arduinoSerial.on('open',function() {
+      sendLog(`Serial port '${arduinoPort}' is opened.`);
+    });
+
+    arduinoSerial.on('close', () => {
+      sendLog(`Serial port '${arduinoPort}' closed.`);
+    });
+
+    arduinoSerial.on('error', (err) => {
+      sendLog(err.toString());
+    });
+  } catch (err) {
+    sendLog("ERROR opening port " + err);
   }
+}
+
+openSerial();
+
+function sendToArduino(obj) {
+  if (arduinoSerial.isOpen) {
+    arduinoSerial.write(gamepad2String(obj));
+    sendLog('SEND RX: ' + gamepad2String(obj));
+  }
+}
+
+function getPortList() {
+  SerialPort.list().then(
+    ports => {
+      //console.log(ports);
+      io.sockets.emit("PORT_LIST", ports);
+    },
+    err => {
+      console.error(err);
+      io.sockets.emit("MESSAGE", err);
+    }
+  );
+}
+
+function sendLog(msg, logit = true) {
+  if (logit) console.log(msg);
+  messages.push(msg);
+  if (messages.length >= MAX_DEBUG_OUTPUT_LINES) {
+    messages.shift();
+  }
+  io.sockets.emit("MESSAGE", messages);
+}
+
+function saveConf() {
+  nconf.set('port', arduinoPort);
+
+  nconf.save(function (err) {
+    if (err) {
+      console.error(err.message);
+      return;
+    }
+    console.log('Configuration saved successfully.');
+  });
 }
 
 function gamepad2String(g) {
@@ -77,3 +194,47 @@ function gamepad2String(g) {
       43
     ]);
 }
+
+
+/*** MIDI ***/
+
+const easymidi = require('easymidi');
+var midi_received = false;
+
+easymidi.getInputs().forEach((inputName) => {
+  const input = new easymidi.Input(inputName);
+  input.on('message', (msg) => {
+    handleMIDI(inputName, msg);
+    midi_received = true;
+  });
+});
+
+function handleMIDI(inputName, msg) {
+  console.log(inputName, msg);
+  sendLog(`MIDI In (${inputName}): Ch ${msg.channel+1}: Note ${msg.note} ${msg._type} velocity ${msg.velocity}`, false);
+
+  switch (msg.note) {
+    case 50:
+      gamepad.button[BTN.A] = msg._type == 'noteon' ? 1 : 0;
+      break;
+    case 62:
+      gamepad.button[BTN.B] = msg._type == 'noteon' ? 1 : 0;
+      break;
+    case 52:
+      gamepad.joyLeft.x = msg._type == 'noteon' ? 255 : 128;
+      break;
+    case 53:
+      // the value of the hat switch is from 0° to 360°, but in 45° increments.
+      // so we use a multiplier of 45
+      // send value from 0 to 8. Set the value to 255 to release the hat switch
+      gamepad.hat = msg._type == 'noteon' ? 4 : 255; // ex: 4 = 4*45 = 180° = ⇩
+      break;
+  }
+}
+
+setInterval(() => {
+  if (midi_received) {
+    sendToArduino(gamepad);
+    midi_received = false;
+  }
+}, 10);

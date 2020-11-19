@@ -12,6 +12,9 @@
 
 SwitchJoystick_ Joystick;
 
+//#define USE_MIDI
+#define USE_SERIAL
+
 // MPU6050
 //----------------------------------
 
@@ -51,11 +54,10 @@ unsigned long releaseTime = 0;
 void getIMUData() {
   if (!dmpReady) return;
 
-  while (!mpuInterrupt && fifoCount < packetSize) {
-    if (mpuInterrupt && fifoCount < packetSize) {
-      fifoCount = mpu.getFIFOCount();
-    }
+  if (!mpuInterrupt && fifoCount < packetSize) {
+    return;
   }
+
   mpuInterrupt = false;
   mpuIntStatus = mpu.getIntStatus();
   fifoCount = mpu.getFIFOCount();
@@ -87,11 +89,12 @@ void getIMUData() {
 
 // SERIAL UART
 //----------------------------------
+#ifdef USE_SERIAL
 
 typedef struct {
   uint8_t button[16];
   int8_t analog[4];
-  int8_t hat[1];
+  uint8_t hat[1];
   uint8_t mode = 0;
 } gamepad_t;
 
@@ -114,16 +117,18 @@ uint8_t get_rx_buffer(uint8_t i) {
 }
 
 uint8_t check_rx_buffer() {
-  uint8_t crc = 0;
   if (get_rx_buffer(0) == 42 && get_rx_buffer(sizeof(gamepad)+1) == 43) {
     return 1;
   }
   return 0;
 }
 
+#endif
+
 
 // SERIAL MIDI
 //----------------------------------
+#ifdef USE_MIDI
 
 typedef struct {
   int8_t channel;
@@ -148,12 +153,13 @@ uint8_t get_midi_buffer(uint8_t i) {
 }
 
 uint8_t check_midi_buffer() {
-  uint8_t crc = 0;
   if (get_midi_buffer(0) & 0b10000000) {
     return 1;
   }
   return 0;
 }
+
+#endif
 
 
 // SERIAL
@@ -161,47 +167,55 @@ uint8_t check_midi_buffer() {
 
 void getSerialData() {
   if (Serial1.available()) {
-    char c = Serial1.read();
-    Serial.print(c, HEX);
-    Serial.print(",");
-    
-    push_rx_buffer(c);
-    if (check_rx_buffer()) {
-      Serial.println(" RX:END");
-      uint8_t *ptr = (uint8_t *)&gamepad; 
-      for (int i = 0; i < sizeof(gamepad); i++)
-        ptr[i] = get_rx_buffer(i+1);
-    }
+    byte c = Serial1.read();
+    //Serial.print(c);
+    //Serial.print(",");
 
-    push_midi_buffer(c);
-    if (check_midi_buffer()) {
-      Serial.print(" MIDI:");
-      for (int i = 0; i <= sizeof(FRAME_SIZE_MIDI); i++) {
-        Serial.print((byte) get_midi_buffer(i));
-        Serial.print(",");
+    #ifdef USE_MIDI
+      push_midi_buffer(c);
+      if (check_midi_buffer()) {
+        Serial.print(" MIDI:");
+        for (int i = 0; i <= FRAME_SIZE_MIDI; i++) {
+          Serial.print((byte) get_midi_buffer(i));
+          Serial.print(",");
+        }
+        Serial.print("END \t ");
+
+        if ((get_midi_buffer(0) & 0xF0) == 0x80) {
+          midi.type = 0;
+        }
+        else if ((get_midi_buffer(0) & 0xF0) == 0x90){
+          midi.type = 1;
+        }
+
+        midi.channel = get_midi_buffer(0) & 0x0F;
+        midi.note = get_midi_buffer(1);
+        midi.velocity = get_midi_buffer(2);
+
+        Serial.print("[MIDI in] channel:");
+        Serial.print(midi.channel + 1);
+        Serial.print(" note:");
+        Serial.print(midi.note);
+        Serial.print(" type:");
+        Serial.print(midi.type);
+        Serial.print(" velocity:");
+        Serial.println(midi.velocity);
       }
-      Serial.print("END \t ");
+    #endif
 
-      if ((get_midi_buffer(0) & 0xF0) == 0x80) {
-        midi.type = 0;
-      } 
-      else if ((get_midi_buffer(0) & 0xF0) == 0x90){
-        midi.type = 1;
+    #ifdef USE_SERIAL
+      push_rx_buffer(c);
+      if (check_rx_buffer()) {
+        for (int i = 0; i <= FRAME_SIZE_RX; i++) {
+          Serial.print(get_rx_buffer(i));
+          Serial.print(",");
+        }
+        Serial.println(" RX:END");
+        uint8_t *ptr = (uint8_t *)&gamepad;
+        for (int i = 0; i < sizeof(gamepad); i++)
+          ptr[i] = get_rx_buffer(i+1);
       }
-
-      midi.channel = get_midi_buffer(0) & 0x0F;
-      midi.note = get_midi_buffer(1);
-      midi.velocity = get_midi_buffer(2);
-
-      Serial.print("[MIDI in] channel:");
-      Serial.print(midi.channel + 1);
-      Serial.print(" note:");
-      Serial.print(midi.note);
-      Serial.print(" type:");
-      Serial.print(midi.type);
-      Serial.print(" velocity:");
-      Serial.println(midi.velocity);
-    }
+    #endif
   }
 }
 
@@ -217,7 +231,9 @@ void fail() {
 
 void setup(){
   Serial.begin(115200);
-  Serial1.begin(115200);
+  #ifdef USE_SERIAL
+    Serial1.begin(115200);
+  #endif
   Joystick.begin(false);
 
   pinMode(A0, INPUT_PULLUP);
@@ -282,25 +298,38 @@ void loop() {
       rollOffset = ypr[2];
     }
   }
-  
+
 
   // USB
 
   if (millis() > timer) {
     timer = millis() + 10; // 10 ms = 1/0.010 == 100Hz
-   
-    for (uint8_t i=0; i<sizeof(gamepad.button); i++) {
-      Joystick.setButton(i, gamepad.button[i]);
-    }
 
-    switch (midi.note) {
-      case 36:
-        Joystick.setButton(1, midi.type);
-        break;
-      case 62:
-        Joystick.setButton(4, midi.type);
-        break;
-    }
+    #ifdef USE_MIDI
+      switch (midi.note) {
+        case 36:
+          Joystick.setButton(1, midi.type);
+          break;
+        case 62:
+          Joystick.setButton(4, midi.type);
+          break;
+      }
+    #endif
+
+    #ifdef USE_SERIAL
+      for (uint8_t i=0; i<sizeof(gamepad.button); i++) {
+        Joystick.setButton(i, gamepad.button[i]);
+      }
+      Joystick.setXAxis(gamepad.analog[0]);
+      Joystick.setYAxis(gamepad.analog[1]);
+      Joystick.setZAxis(gamepad.analog[2]);
+      Joystick.setRzAxis(gamepad.analog[3]);
+      Joystick.setHatSwitch(gamepad.hat[0] == 255 ? -1 : gamepad.hat[0]*45);
+    #endif
+
+    // USE IMU AXIS
+    //Joystick.setXAxis(leftJoyX);
+    //Joystick.setYAxis(leftJoyY);
 
     if (!digitalRead(14)) {
       Joystick.pressButton(1); // B
@@ -317,19 +346,6 @@ void loop() {
     if (!digitalRead(A0)) {
       Joystick.pressButton(10); // Lstick
     }
-
-    if (gamepad.mode == 1) {
-      Joystick.setXAxis(gamepad.analog[0]);
-      Joystick.setYAxis(gamepad.analog[1]);
-    }
-    else {
-      Joystick.setXAxis(leftJoyX);
-      Joystick.setYAxis(leftJoyY);
-    }
-
-    Joystick.setZAxis(gamepad.analog[2]);
-    Joystick.setRzAxis(gamepad.analog[3]);
-    Joystick.setHatSwitch(gamepad.hat[0]);
 
     Joystick.sendState();
   }
