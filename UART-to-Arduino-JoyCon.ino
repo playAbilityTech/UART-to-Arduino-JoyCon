@@ -278,7 +278,7 @@ void setup(){
     dmpReady = true;
     packetSize = mpu.dmpGetFIFOPacketSize();
   } else {
-    fail();
+    //fail();
   }
 }
 
