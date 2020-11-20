@@ -157,44 +157,18 @@ function getPortList() {
 const easymidi = require('easymidi');
 var midi_received = false;
 
+const midiHandler = require('./midiHandlers/demo');
+
 // Get message from all midi input and all channels
 easymidi.getInputs().forEach((inputName) => {
   const input = new easymidi.Input(inputName);
   input.on('message', (msg) => {
-    handleMIDI(inputName, msg);
+    sendLog(`MIDI In (${inputName}): Ch ${msg.channel+1}: Note ${msg.note} ${msg._type} velocity ${msg.velocity}`, false);
+    midiHandler(gamepadSerial, inputName, msg, () => {
+      midi_received = true;
+    });
   });
 });
-
-function handleMIDI(inputName, msg) {
-  console.log(inputName, msg);
-  sendLog(`MIDI In (${inputName}): Ch ${msg.channel+1}: Note ${msg.note} ${msg._type} velocity ${msg.velocity}`, false);
-
-  switch (msg.note) {
-    case 50:
-      gamepadSerial.setButton("A", +(msg._type == 'noteon'));
-      midi_received = true;
-      break;
-    case 62:
-      gamepadSerial.setButton("B", +(msg._type == 'noteon'));
-      midi_received = true;
-      break;
-    case 52:
-      gamepadSerial.triggerButton("L", () => {
-        midi_received = true;
-      });
-      gamepadSerial.triggerButton("X", () => {
-        midi_received = true;
-      });
-      midi_received = true;
-      break;
-    case 53:
-      gamepadSerial.setHat(msg._type == 'noteon' ? "HAT_DOWN" : "HAT_RELEASE");
-      midi_received = true;
-      break;
-    default:
-      midi_received = false;;
-  }
-}
 
 // Send state outside off the MIDI loop
 // for better performance.
