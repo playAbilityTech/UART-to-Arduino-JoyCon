@@ -24,6 +24,13 @@ const HAT = {
   LEFT: 6,
   RELEASE: 255,
 };
+const JOYSTICK = {
+  UP: {x: 128, y: 0},
+  RIGHT: {x: 255, y: 128},
+  DOWN: {x: 128, y: 255},
+  LEFT: {x: 0, y: 128},
+  RELEASE: {x: 128, y: 128}
+};
 
 class GamepadHandler extends EventEmitter {
   constructor() {
@@ -106,12 +113,13 @@ class GamepadHandler extends EventEmitter {
 
   /**
    * Send data to Serial
+   * @private
    * @param {Object} obj Gamepad object
    * @callback [next]
    */
-  sendSerial(obj, next = (p) => {}) {
+  _sendSerial(obj, next = (p) => {}) {
     if (this.serial.isOpen) {
-      var payload = this.pack(obj);
+      var payload = this._pack(obj);
       this.serial.write(payload);
       console.log('SEND: ' + payload);
       next(payload);
@@ -120,10 +128,11 @@ class GamepadHandler extends EventEmitter {
 
   /**
    * Prep data ready to send
+   * @private
    * @param {Object} obj Gamepad object
    * @return {Object[]|false|undefined} Return an octet array containing the packed values array. If there are fewer values supplied, Pack() will return false. If any value is of an inappropriate type, the results are undefined.
    */
-  pack(obj) {
+  _pack(obj) {
     return jspack.Pack(
       `B${obj.button.length}ABBBBBBB`, [
         42,
@@ -149,8 +158,9 @@ class GamepadHandler extends EventEmitter {
    * @param {Object} obj Gamepad object
    */
   setState(obj) {
-    this.gamepad = obj;
-    this.stateUpdated();
+    //this.gamepad = obj;
+    Object.assign(this.gamepad, obj);
+    this._stateUpdated();
     if (this.autoSendState) this.sendState();
   }
 
@@ -159,11 +169,11 @@ class GamepadHandler extends EventEmitter {
    * @param {int|String} button
    * @param {int} value (0 or 1)
    */
-  setButton(button, value) {
-    var id = this.getButtonMappingValue(button);
+  setButton(button, value = 1) {
+    var id = this._getButtonMappingValue(button);
     if (id >= this.gamepad.button.length) return;
-    this.gamepad.button[id] = this.safe_Uint8_t(value);
-    this.stateUpdated();
+    this.gamepad.button[id] = this._safe_Uint8_t(value);
+    this._stateUpdated();
     if (this.autoSendState) this.sendState();
   }
 
@@ -189,7 +199,7 @@ class GamepadHandler extends EventEmitter {
    * @callback [onRelease]
    * @param {int} [delay=200]
    */
-  triggerButton(button, onRelease, delay = 200) {
+  deprecated_triggerButton(button, onRelease, delay = 200) {
     clearTimeout(this.triggerTimers[button]);
     this.setButton(button, 1);
     if (this.autoSendState) this.sendState();
@@ -207,10 +217,10 @@ class GamepadHandler extends EventEmitter {
    * @param {int} x (0---128---255)
    * @param {int} y (0---128---255)
    */
-  setLeftAxis(x, y) {
-    this.gamepad.joyLeft.x = this.safe_Uint8_t(x);
-    this.gamepad.joyLeft.y = this.safe_Uint8_t(y);
-    this.stateUpdated();
+  setLeftAxis(x = 128, y = 128) {
+    this.gamepad.joyLeft.x = this._safe_Uint8_t(x);
+    this.gamepad.joyLeft.y = this._safe_Uint8_t(y);
+    this._stateUpdated();
     if (this.autoSendState) this.sendState();
   }
 
@@ -219,11 +229,29 @@ class GamepadHandler extends EventEmitter {
    * @param {int} x (0---128---255)
    * @param {int} y (0---128---255)
    */
-  setRightAxis(x, y) {
-    this.gamepad.joyRight.x = this.safe_Uint8_t(x);
-    this.gamepad.joyRight.y = this.safe_Uint8_t(y);
-    this.stateUpdated();
+  setRightAxis(x = 128, y = 128) {
+    this.gamepad.joyRight.x = this._safe_Uint8_t(x);
+    this.gamepad.joyRight.y = this._safe_Uint8_t(y);
+    this._stateUpdated();
     if (this.autoSendState) this.sendState();
+  }
+
+  /**
+   * Set Left Joystick direction
+   * @param {String} direction
+   */
+  setLeftAxisDirection(direction) {
+    var axis = this._getJoystickMappingValue(direction);
+    this.setLeftAxis(axis.x, axis.y);
+  }
+
+  /**
+   * Set Right Joystick direction
+   * @param {String} direction
+   */
+  setRightAxisDirection(direction) {
+    var axis = this._getJoystickMappingValue(direction);
+    this.setRightAxis(axis.x, axis.y);
   }
 
   /**
@@ -237,10 +265,10 @@ class GamepadHandler extends EventEmitter {
    *
    * ex: 4 = 4 * 45 = 180° = ⇩
    */
-  setHat(value) {
-    var val = this.getHatMappingValue(value);
-    this.gamepad.hat = this.safe_Uint8_t(val);
-    this.stateUpdated();
+  setHat(value = 255) {
+    var val = this._getHatMappingValue(value);
+    this.gamepad.hat = this._safe_Uint8_t(val);
+    this._stateUpdated();
     if (this.autoSendState) this.sendState();
   }
 
@@ -249,22 +277,37 @@ class GamepadHandler extends EventEmitter {
    * @callback [next] callback
    */
   sendState(next = (p) => {}) {
-    this.sendSerial(this.gamepad, next);
+    this._sendSerial(this.gamepad, next);
   }
 
   /**
    * Send stateChange event
+   * @private
    * @event stateChange
    */
-  stateUpdated() {
+  _stateUpdated() {
     this.emit('stateChange', this.gamepad);
   }
 
   /**
-   * Get value from the HAT object
+   * Get value from the JOYSTICK object
+   * @private
    * @param {String} value
    */
-  getHatMappingValue(value) {
+  _getJoystickMappingValue(value) {
+    var axis = {x: 128, y: 128};
+    if (value.toUpperCase() in JOYSTICK) {
+      axis = JOYSTICK[value.toUpperCase()];
+    }
+    return axis;
+  }
+
+  /**
+   * Get value from the HAT object
+   * @private
+   * @param {String} value
+   */
+  _getHatMappingValue(value) {
     var id = value;
     if (id.toUpperCase() in HAT) {
       id = HAT[id.toUpperCase()];
@@ -274,9 +317,10 @@ class GamepadHandler extends EventEmitter {
 
   /**
    * Get value from the MAPPING object
+   * @private
    * @param {String} value
    */
-  getButtonMappingValue(value) {
+  _getButtonMappingValue(value) {
     var id = value;
     if (id.toUpperCase() in BUTTONS) {
       id = BUTTONS[id.toUpperCase()];
@@ -294,9 +338,10 @@ class GamepadHandler extends EventEmitter {
 
   /**
    * Constrain value in 0 to 255 range
+   * @private
    * @param {String} value
    */
-  safe_Uint8_t(value) {
+  _safe_Uint8_t(value) {
     return Math.min(Math.max(parseInt(value), 0), 255) || 0;
   }
 }
