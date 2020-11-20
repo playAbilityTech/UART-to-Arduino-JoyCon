@@ -24,7 +24,7 @@
           <td>
             <button-gamepad
               :callback="(state) => {
-                gamepad.hat = state ? 0 : 255;
+                gamepad.hat = state ? 0 : 10;
                 updateGamepad();
               }" text="⇧">
             </button-gamepad>
@@ -35,7 +35,7 @@
           <td>
             <button-gamepad
               :callback="(state) => {
-                gamepad.hat = state ? 6 : 255;
+                gamepad.hat = state ? 6 : 10;
                 updateGamepad();
               }" text="⇦">
             </button-gamepad>
@@ -44,7 +44,7 @@
           <td>
             <button-gamepad
               :callback="(state) => {
-                gamepad.hat = state ? 2 : 255;
+                gamepad.hat = state ? 2 : 10;
                 updateGamepad();
               }" text="⇨">
             </button-gamepad>
@@ -64,13 +64,6 @@
         </tr>
       </table>
 
-      <!-- <br><br>
-      <input type="checkbox" id="modeCheckbox" v-model="mode1">
-      <label for="modeCheckbox">Send JoyLeft</label>
-      <br>
-      <input class="range" type="range" min="0" max="255" step="1" v-model="joyLeftX" @input="joyLeftXChange">
-      <br>
-      <input class="range" type="range" min="0" max="255" step="1" v-model="joyLeftY" @input="joyLeftyChange"> -->
     </div>
     <div class="top">
 
@@ -160,18 +153,9 @@
     mounted() {
       isTouchDevice = 'ontouchstart' in document.documentElement;
 
-      // socket.on('message', function(obj){
-      //   console.log(obj);
-      // });
-
-      socket.on('CLEAR_MESSAGES', () => {
-        this.messages = [];
-      });
-
       socket.on('MESSAGE', (data) => {
         this.messages = data;
       });
-
       socket.on('PORT_LIST', (obj) => {
         this.options = obj;
         var exsist = this.options.filter((v) => {
@@ -181,41 +165,21 @@
           this.portSelected = '';
         }
       });
-
       socket.on('UPDATE_PORT', (port) => {
         this.portSelected = port;
       });
-
       socket.on('GAMEPAD', (data) => {
         this.gamepad = data;
       });
-
       socket.on('MAPPING', (data) => {
         this.map = data;
       });
-
     },
     updated() {
       this.$nextTick(() => this.scrollToEnd());
     },
 
-    watch:{
-      // serialDebug(newValue) {
-      //   localStorage.setItem("serialDebug", newValue);
-      // }
-    },
-
     methods: {
-      send() {
-        socket.emit('message', {
-          message: "coucou"
-        });
-      },
-      sendButton(id) {
-        socket.emit('BUTTON', {
-          message: "coucou"
-        });
-      },
       reloadPortList() {
         socket.emit('GET_PORT_LIST');
       },
@@ -243,20 +207,6 @@
         content.scrollTop = content.scrollHeight;
       },
       updateGamepad() {
-        socket.emit('UPDATE_GAMEPAD', this.gamepad);
-      },
-      joyLeftXChange() {
-        if (this.mode1) {
-          this.gamepad.mode = 1;
-        }
-        this.gamepad.joyLeft.x = parseInt(this.joyLeftX);
-        socket.emit('UPDATE_GAMEPAD', this.gamepad);
-      },
-      joyLeftyChange() {
-        if (this.mode1) {
-          this.gamepad.mode = 1;
-        }
-        this.gamepad.joyLeft.y = parseInt(this.joyLeftY);
         socket.emit('UPDATE_GAMEPAD', this.gamepad);
       }
     }
