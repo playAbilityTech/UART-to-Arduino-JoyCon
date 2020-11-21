@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UART 2 Switch Controller</title>
+  <title>Serial Arduino Switch Pro Controller</title>
   <script src="https://cdn.jsdelivr.net/npm/vue"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fastclick@1.0.6/lib/fastclick.min.js"></script>
@@ -241,9 +241,9 @@
                 <td></td>
                 <td>
                   <button-gamepad
-                    v-bind:class="{ active: gamepad.joyRight.x < 128 }"
+                    v-bind:class="{ active: gamepad.joyRight.y < 128 }"
                     :callback="(state) => {
-                      gamepad.joyRight.x = state ? 0 : 128;
+                      gamepad.joyRight.y = state ? 0 : 128;
                       updateGamepad();
                     }" text="⇧">
                   </button-gamepad>
@@ -253,9 +253,9 @@
               <tr>
                 <td>
                   <button-gamepad
-                    v-bind:class="{ active: gamepad.joyRight.y < 128 }"
+                    v-bind:class="{ active: gamepad.joyRight.x < 128 }"
                     :callback="(state) => {
-                      gamepad.joyRight.y = state ? 0 : 128;
+                      gamepad.joyRight.x = state ? 0 : 128;
                       updateGamepad();
                     }" text="⇦">
                   </button-gamepad>
@@ -263,9 +263,9 @@
                 <td></td>
                 <td>
                   <button-gamepad
-                    v-bind:class="{ active: gamepad.joyRight.y > 128 }"
+                    v-bind:class="{ active: gamepad.joyRight.x > 128 }"
                     :callback="(state) => {
-                      gamepad.joyRight.y = state ? 255 : 128;
+                      gamepad.joyRight.x = state ? 255 : 128;
                       updateGamepad();
                     }" text="⇨">
                   </button-gamepad>
@@ -275,9 +275,9 @@
                 <td></td>
                 <td>
                   <button-gamepad
-                    v-bind:class="{ active: gamepad.joyRight.x > 128 }"
+                    v-bind:class="{ active: gamepad.joyRight.y > 128 }"
                     :callback="(state) => {
-                      gamepad.joyRight.x = state ? 255 : 128;
+                      gamepad.joyRight.y = state ? 255 : 128;
                       updateGamepad();
                       }" text="⇩">
                   </button-gamepad>
