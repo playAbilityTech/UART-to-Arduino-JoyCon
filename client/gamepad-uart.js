@@ -245,6 +245,16 @@ class GamepadHandler extends EventEmitter {
   }
 
   /**
+   * Set Mode
+   * @param {int} value
+   */
+  setMode(value = 0) {
+    this.gamepad.mode = this._safe_Uint8_t(value);
+    this._stateUpdated();
+    if (this.autoSendState) this.sendState();
+  }
+
+  /**
    * Set State
    * @callback [next] callback
    */

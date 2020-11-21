@@ -16,7 +16,13 @@ const DemoMidiMapping = (gamepadSerial, inputName, msg, sendState = () => {}) =>
       gamepadSerial.setButton("A", +(msg._type == 'noteon'));
       break;
     case 38:
-      gamepadSerial.setButton("B", +(msg._type == 'noteon'));
+      gamepadSerial.setMode(1);
+      gamepadSerial.setLeftAxisDirection("UP");
+      delay(200).then(() => {
+        gamepadSerial.setLeftAxisDirection("RELEASE");
+        gamepadSerial.setMode(0);
+        sendState();
+      });
       break;
     case 40:
       gamepadSerial.setButton("R", 1);
@@ -25,9 +31,11 @@ const DemoMidiMapping = (gamepadSerial, inputName, msg, sendState = () => {}) =>
         sendState();
       });
 
+      gamepadSerial.setMode(1);
       gamepadSerial.setLeftAxisDirection("UP");
       delay(200).then(() => {
         gamepadSerial.setLeftAxisDirection("RELEASE");
+        gamepadSerial.setMode(0);
         sendState();
       });
       break;

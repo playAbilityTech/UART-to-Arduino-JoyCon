@@ -299,8 +299,12 @@
    -->
     </div>
     <div class="top">
-
       <br>
+
+      <input type="checkbox" id="checkbox-joy" v-model="useJoystickChecked" @change="checkUseJoy($event)">
+      <label for="checkbox-joy">Disable IMU Joystick</label>
+
+      <br><br>
 
       <input type="checkbox" id="checkbox" v-model="serialChecked" @change="checkSerial($event)">
       <label for="checkbox">Serial</label>
@@ -389,6 +393,7 @@
     data: {
       portSelected: '',
       serialChecked: true,
+      useJoystickChecked: false,
       options: [],
       messages: [],
       gamepad: {},
@@ -422,6 +427,9 @@
       });
       socket.on('GAMEPAD', (data) => {
         this.gamepad = data;
+        if (this.gamepad.mode == 1) {
+          this.useJoystickChecked = true;
+        }
       });
       socket.on('MAPPING', (data) => {
         this.map = data;
@@ -456,6 +464,15 @@
         else {
           socket.emit('CLOSE_SERIAL');
         }
+      },
+      checkUseJoy(e) {
+        if (this.useJoystickChecked) {
+          this.gamepad.mode = 1;
+        }
+        else {
+          this.gamepad.mode = 0;
+        }
+        this.updateGamepad();
       },
       scrollToEnd() {
         var content = this.$refs.messagesContainer;
