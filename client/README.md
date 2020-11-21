@@ -12,10 +12,22 @@ Connect to the Serial port of the arduino connected to a Nintendo Switch. By def
 Close the Serial connection.
 
 ### Gamepad.setLeftAxis(x, y)
-Sets the X axis value. The range is
+Sets the Left Joystick axis value. The range is 0 to 255.
+
+#### Gamepad.setLeftAxisX(value)
+Sets the Left Joystick X axis value. The range is 0 to 255.
+
+#### Gamepad.setLeftAxisY(value)
+Sets the Left Joystick Y axis value. The range is 0 to 255.
 
 ### Gamepad.setRightAxis(x, y)
-Sets the Z axis value.
+Sets the Right Joystick axis value. The range is 0 to 255.
+
+#### Gamepad.setRightAxisX(value)
+Sets the Right Joystick X axis value. The range is 0 to 255.
+
+#### Gamepad.setRightAxisY(value)
+Sets the Right Joystick Y axis value. The range is 0 to 255.
 
 ### Gamepad.setLeftAxisDirection(direction)
 Sets the Z axis value.
@@ -46,6 +58,9 @@ Set the value from `0` to `8` or a mapping reference string below.
 | MAPPING | `UP` | `RIGHT` | `DOWN` | `LEFT` | `RELEASE` |
 | ------- | - | - | - | - | - |
 | value   | 0 | 2 | 4 | 6 | 255 |
+
+### Gamepad.setMode(value)
+Set mode value. Range is from 0 to 255.
 
 ### Gamepad.sendState()
 Send the current gamepad state to the Arduino. Only needs to be called if `AutoSendState` is `false` (see `Gamepad.connect` for more details).

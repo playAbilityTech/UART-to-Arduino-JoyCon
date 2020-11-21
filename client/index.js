@@ -158,7 +158,7 @@ function getPortList() {
 const easymidi = require('easymidi');
 var midi_received = false;
 
-const midiHandler = require('./midiHandlers/demo');
+const midiHandler = require('./midiHandlers/hyruleBasic');
 
 // Get message from all midi input and all channels
 easymidi.getInputs().forEach((inputName) => {

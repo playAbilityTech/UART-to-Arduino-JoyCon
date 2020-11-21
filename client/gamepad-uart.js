@@ -195,6 +195,16 @@ class GamepadHandler extends EventEmitter {
     this._stateUpdated();
     if (this.autoSendState) this.sendState();
   }
+  setLeftAxisX(value) {
+    this.gamepad.joyLeft.x = this._safe_Uint8_t(value);
+    this._stateUpdated();
+    if (this.autoSendState) this.sendState();
+  }
+  setLeftAxisY(value) {
+    this.gamepad.joyLeft.y = this._safe_Uint8_t(value);
+    this._stateUpdated();
+    if (this.autoSendState) this.sendState();
+  }
 
   /**
    * Set Right Joystick Axis
@@ -204,6 +214,16 @@ class GamepadHandler extends EventEmitter {
   setRightAxis(x = 128, y = 128) {
     this.gamepad.joyRight.x = this._safe_Uint8_t(x);
     this.gamepad.joyRight.y = this._safe_Uint8_t(y);
+    this._stateUpdated();
+    if (this.autoSendState) this.sendState();
+  }
+  setRightAxisX(value) {
+    this.gamepad.joyRight.x = this._safe_Uint8_t(value);
+    this._stateUpdated();
+    if (this.autoSendState) this.sendState();
+  }
+  setRightAxisY(value) {
+    this.gamepad.joyRight.y = this._safe_Uint8_t(value);
     this._stateUpdated();
     if (this.autoSendState) this.sendState();
   }
