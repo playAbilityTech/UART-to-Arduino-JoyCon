@@ -214,15 +214,81 @@ function handleMIDI(inputName, msg) {
   sendLog(`MIDI In (${inputName}): Ch ${msg.channel+1}: Note ${msg.note} ${msg._type} velocity ${msg.velocity}`, false);
 
   switch (msg.note) {
+    //Bouton B (51) et Bouton A (42)
+    case 51:
+    gamepad.button[BTN.B] = 1;
+      setTimeout(() => {
+        gamepad.button[BTN.B] = 0;
+        midi_received = true;
+      }, 500);
+      break;
+    case 42:
+    gamepad.button[BTN.A] = 1;
+      setTimeout(() => {
+        gamepad.button[BTN.A] = 0;
+        midi_received = true;
+      }, 500);
+      break;
+    //gachettes gauche (49) et droite  (57)
+    case 49:
+    gamepad.button[BTN.ZL] = 1;
+      setTimeout(() => {
+        gamepad.button[BTN.ZL] = 0;
+        midi_received = true;
+      }, 500);
+      break;
+    case 57:
+      gamepad.button[BTN.ZR] = 1;
+        setTimeout(() => {
+          gamepad.button[BTN.ZR] = 0;
+          midi_received = true;
+        }, 500);
+        break;
+    //gauche (50) devant (36) droite (48) reculer (44)
     case 50:
-      gamepad.button[BTN.A] = msg._type == 'noteon' ? 1 : 0;
+      gamepad.joyLeft.x = 0;
+        setTimeout(() => {
+          gamepad.joyLeft.x = 128;
+          midi_received = true;
+        }, 500);
+        break;
+    case 36:
+      gamepad.joyLeft.y = 0;
+        setTimeout(() => {
+          gamepad.joyLeft.y = 128;
+          midi_received = true;
+        }, 500);
+        break;
+    case 48:
+      gamepad.joyLeft.x = 255;
+        setTimeout(() => {
+          gamepad.joyLeft.x = 128;
+          midi_received = true;
+        }, 500);
+        break;
+    case 44:
+      gamepad.joyLeft.y = 255;
+        setTimeout(() => {
+          gamepad.joyLeft.y = 128;
+          midi_received = true;
+        }, 500);
+        break;
+    // coups X(38) et Y (45)
+    case 38:
+    gamepad.button[BTN.X] = 1;
+      setTimeout(() => {
+        gamepad.button[BTN.X] = 0;
+        midi_received = true;
+      }, 500);
       break;
-    case 62:
-      gamepad.button[BTN.B] = msg._type == 'noteon' ? 1 : 0;
-      break;
-    case 52:
-      gamepad.joyLeft.x = msg._type == 'noteon' ? 255 : 128;
-      break;
+    case 45:
+      gamepad.button[BTN.Y] = 1;
+        setTimeout(() => {
+          gamepad.button[BTN.Y] = 0;
+          midi_received = true;
+        }, 500);
+        break;
+
     case 53:
       // the value of the hat switch is from 0° to 360°, but in 45° increments.
       // so we use a multiplier of 45
