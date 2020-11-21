@@ -15,7 +15,10 @@ const DemoMidiMapping = (gamepadSerial, inputName, msg, sendState = () => {}) =>
     case 50:
       gamepadSerial.setButton("A", +(msg._type == 'noteon'));
       break;
-    case 62:
+    case 38:
+      gamepadSerial.setButton("B", +(msg._type == 'noteon'));
+      break;
+    case 40:
       gamepadSerial.setButton("R", 1);
       delay(1000).then(() => {
         gamepadSerial.setButton("R", 0);
@@ -28,7 +31,7 @@ const DemoMidiMapping = (gamepadSerial, inputName, msg, sendState = () => {}) =>
         sendState();
       });
       break;
-    case 53:
+    case 41:
       gamepadSerial.setHat(msg._type == 'noteon' ? "DOWN" : "RELEASE");
       break;
     default:

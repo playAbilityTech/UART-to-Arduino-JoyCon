@@ -177,6 +177,7 @@ setInterval(() => {
   if (midi_received) {
     gamepadSerial.sendState((payload) => {
       sendLog('SEND: ' + payload, false);
+      io.sockets.emit("GAMEPAD", gamepadSerial.getState());
     });
     midi_received = false;
   }

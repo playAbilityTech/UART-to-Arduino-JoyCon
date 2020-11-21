@@ -14,24 +14,28 @@
       <div class="controls-left">
         <div class="row">
           <button-gamepad
+            v-bind:class="{ active: gamepad.button[6] }"
             :callback="(state) => {
               gamepad.button[6] = state;
               updateGamepad();
             }" text="ZL">
           </button-gamepad>
           <button-gamepad
+            v-bind:class="{ active: gamepad.button[4] }"
             :callback="(state) => {
               gamepad.button[4] = state;
               updateGamepad();
             }" text="L">
           </button-gamepad>
           <button-gamepad
+            v-bind:class="{ active: gamepad.button[8] }"
             :callback="(state) => {
               gamepad.button[8] = state;
               updateGamepad();
             }" text="-">
           </button-gamepad>
           <button-gamepad
+            v-bind:class="{ active: gamepad.button[13] }"
             :callback="(state) => {
               gamepad.button[13] = state;
               updateGamepad();
@@ -45,6 +49,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.joyLeft.y < 128 }"
                     :callback="(state) => {
                       gamepad.joyLeft.y = state ? 0 : 128;
                       updateGamepad();
@@ -56,6 +61,7 @@
               <tr>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.joyLeft.x < 128 }"
                     :callback="(state) => {
                       gamepad.joyLeft.x = state ? 0 : 128;
                       updateGamepad();
@@ -65,6 +71,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.joyLeft.x > 128 }"
                     :callback="(state) => {
                       gamepad.joyLeft.x = state ? 255 : 128;
                       updateGamepad();
@@ -76,6 +83,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.joyLeft.y > 128 }"
                     :callback="(state) => {
                       gamepad.joyLeft.y = state ? 255 : 128;
                       updateGamepad();
@@ -94,6 +102,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.hat == 0 }"
                     :callback="(state) => {
                       gamepad.hat = state ? 0 : 255;
                       updateGamepad();
@@ -105,6 +114,7 @@
               <tr>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.hat == 6 }"
                     :callback="(state) => {
                       gamepad.hat = state ? 6 : 255;
                       updateGamepad();
@@ -114,6 +124,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.hat == 2 }"
                     :callback="(state) => {
                       gamepad.hat = state ? 2 : 255;
                       updateGamepad();
@@ -125,6 +136,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.hat == 4 }"
                     :callback="(state) => {
                       gamepad.hat = state ? 4 : 255;
                       updateGamepad();
@@ -141,24 +153,28 @@
       <div class="controls-right">
         <div class="row">
           <button-gamepad
+            v-bind:class="{ active: gamepad.button[12] }"
             :callback="(state) => {
               gamepad.button[12] = state;
               updateGamepad();
             }" text="H">
           </button-gamepad>
           <button-gamepad
+            v-bind:class="{ active: gamepad.button[9] }"
             :callback="(state) => {
               gamepad.button[9] = state;
               updateGamepad();
             }" text="+">
           </button-gamepad>
           <button-gamepad
+            v-bind:class="{ active: gamepad.button[5] }"
             :callback="(state) => {
               gamepad.button[5] = state;
               updateGamepad();
             }" text="R">
           </button-gamepad>
           <button-gamepad
+            v-bind:class="{ active: gamepad.button[7] }"
             :callback="(state) => {
               gamepad.button[7] = state;
               updateGamepad();
@@ -172,6 +188,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.button[3] }"
                     :callback="(state) => {
                       gamepad.button[3] = state;
                       updateGamepad();
@@ -183,6 +200,7 @@
               <tr>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.button[0] }"
                     :callback="(state) => {
                       gamepad.button[0] = state;
                       updateGamepad();
@@ -192,6 +210,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.button[2] }"
                     :callback="(state) => {
                       gamepad.button[2] = state;
                       updateGamepad();
@@ -203,6 +222,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.button[1] }"
                     :callback="(state) => {
                       gamepad.button[1] = state;
                       updateGamepad();
@@ -221,6 +241,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.joyRight.x < 128 }"
                     :callback="(state) => {
                       gamepad.joyRight.x = state ? 0 : 128;
                       updateGamepad();
@@ -232,6 +253,7 @@
               <tr>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.joyRight.y < 128 }"
                     :callback="(state) => {
                       gamepad.joyRight.y = state ? 0 : 128;
                       updateGamepad();
@@ -241,6 +263,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.joyRight.y > 128 }"
                     :callback="(state) => {
                       gamepad.joyRight.y = state ? 255 : 128;
                       updateGamepad();
@@ -252,6 +275,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
+                    v-bind:class="{ active: gamepad.joyRight.x > 128 }"
                     :callback="(state) => {
                       gamepad.joyRight.x = state ? 255 : 128;
                       updateGamepad();
@@ -307,7 +331,8 @@
   Vue.component('button-gamepad', {
     data: function () {
       return {
-        timer: 0
+        timer: 0,
+        release : null,
       }
     },
     props: {
@@ -337,21 +362,22 @@
       },
       buttonState(state) {
         if (state == 1) {
+          clearTimeout(this.release);
           this.callback(state);
           this.timer = Date.now();
-          console.log('buttonState', state);
+          //console.log('buttonState', state);
         }
         else {
           var diff = Date.now() - this.timer;
-          console.log(diff);
+          //console.log(diff);
           if (diff > 200) {
             this.callback(state);
-            console.log('buttonState', state);
+            //console.log('buttonState', state);
           }
           else {
-            setTimeout(() => {
+            this.release = setTimeout(() => {
               this.callback(state);
-              console.log('buttonState', state);
+              //console.log('buttonState', state);
             }, 200 - diff);
           }
         }
@@ -506,7 +532,8 @@
     outline: none;
   }
 
-  .button:active {
+  .button:active,
+  .button.active {
     top: 3px;
     box-shadow: 0 0px #403e41;
   }
