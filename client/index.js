@@ -53,6 +53,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('CLOSE_SERIAL', function() {
+    sendLog(`Serial port closed.`, false);
     gamepadSerial.close();
   });
 
@@ -115,11 +116,11 @@ const SerialPort = require("serialport");
 const GamepadHandler = require("./gamepad-uart");
 var gamepadSerial = new GamepadHandler();
 
-gamepadSerial.on('open', (port) => {
+gamepadSerial.on('open', () => {
   sendLog(`Serial port is opened.`, false);
 });
 gamepadSerial.on('close', (port) => {
-  sendLog(`Serial port closed.`, false);
+  //sendLog(`Serial port ${port} closed.`, false);
 });
 gamepadSerial.on('error', (err) => {
   sendLog('error' + err.toString(), false);

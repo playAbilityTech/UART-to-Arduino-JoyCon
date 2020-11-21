@@ -40,7 +40,7 @@ class GamepadHandler extends EventEmitter {
    */
   connect({portPath, initAutoSendState = true}) {
     if (!portPath) return;
-    if (this.serial.isOpen) this.serial.close();
+    if (this.serial.isOpen) this.close();
 
     this.portPath = portPath;
     this.autoSendState = initAutoSendState;
@@ -58,10 +58,10 @@ class GamepadHandler extends EventEmitter {
       this.emit('open', err);
     });
 
-    this.serial.on('close', () => {
-      console.log(`Serial port '${this.portPath}' closed.`);
-      this.emit('close');
-    });
+    this.serial.on('close', function(port) {
+      console.log(`Serial port '${port}' closed.`);
+      this.emit('close', port);
+    }.bind(this, this.portPath));
 
     this.serial.on('error', (err) => {
       console.log('error', err.toString());
@@ -131,8 +131,7 @@ class GamepadHandler extends EventEmitter {
    * @param {Object} obj Gamepad object
    */
   setState(obj) {
-    //this.gamepad = obj;
-    Object.assign(this.gamepad, obj);
+    this.gamepad = obj;
     this._stateUpdated();
     if (this.autoSendState) this.sendState();
   }
