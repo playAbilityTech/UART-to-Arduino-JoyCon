@@ -320,16 +320,20 @@ void loop() {
       for (uint8_t i=0; i<sizeof(gamepad.button); i++) {
         Joystick.setButton(i, gamepad.button[i]);
       }
-      Joystick.setXAxis(gamepad.analog[0]);
-      Joystick.setYAxis(gamepad.analog[1]);
+      if (gamepad.mode == 1) {
+        Joystick.setXAxis(gamepad.analog[0]);
+        Joystick.setYAxis(gamepad.analog[1]);
+      }
+      else {
+        // USE IMU AXIS
+        Joystick.setXAxis(leftJoyX);
+        Joystick.setYAxis(leftJoyY);
+      }
+
       Joystick.setZAxis(gamepad.analog[2]);
       Joystick.setRzAxis(gamepad.analog[3]);
       Joystick.setHatSwitch(gamepad.hat[0] == 255 ? -1 : gamepad.hat[0]*45);
     #endif
-
-    // USE IMU AXIS
-    //Joystick.setXAxis(leftJoyX);
-    //Joystick.setYAxis(leftJoyY);
 
     if (!digitalRead(14)) {
       Joystick.pressButton(1); // B
