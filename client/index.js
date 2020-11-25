@@ -12,6 +12,8 @@ const PORT = 3000;
 let ip = require('ip').address();
 
 var arduinoPort = '';
+var tcpHostIP = '';
+var tcpHostPort = '';
 
 
 /*** APP ***/
@@ -37,13 +39,13 @@ io.on('connection', (socket) => {
 
   socket.on('UPDATE_GAMEPAD', function(data) {
     gamepadSerial.setState(data);
-    gamepadSerial.sendState((payload) => {
-      sendLog('SEND: ' + payload, false);
+    gamepadSerial.sendState((payload, senders) => {
+      sendLog(`SEND: (${senders.toString()}) ${payload}`, false);
     });
   });
 
   socket.on('CHANGE_SERIAL_PORT', function(port) {
-    arduinoPort = port;
+    arduinoPort = port || '';
     saveConf();
     io.sockets.emit("UPDATE_PORT", arduinoPort);
   });
@@ -63,9 +65,24 @@ io.on('connection', (socket) => {
 
   getPortList();
 
+  socket.on('CHANGE_TCP_HOST', function(hostIp, HostPort) {
+    tcpHostIP = hostIp;
+    tcpHostPort = HostPort;
+    saveConf();
+    //io.sockets.emit("UPDATE_TCP_HOST", tcpHostIP, tcpHostPort);
+  });
+
+  socket.on('OPEN_TCP', function() {
+    openTCP();
+  });
+  socket.on('CLOSE_TCP', function() {
+    gamepadSerial.closeTCP();
+  });
+
   io.sockets.emit("GAMEPAD", gamepadSerial.getState());
   io.sockets.emit("MESSAGE", messages);
   io.sockets.emit("UPDATE_PORT", arduinoPort);
+  io.sockets.emit("UPDATE_TCP_HOST", tcpHostIP, tcpHostPort);
   io.sockets.emit("MAPPING", gamepadSerial.getButtonsMapping());
 });
 
@@ -96,9 +113,13 @@ const nconf = require('nconf');
 nconf.use('file', { file: './config.json' });
 nconf.load();
 arduinoPort = nconf.get('port') || '';
+tcpHostIP = nconf.get('tcp-ip') || '';
+tcpHostPort = nconf.get('tcp-port') || '2323';
 
 function saveConf() {
   nconf.set('port', arduinoPort);
+  nconf.set('tcp-ip', tcpHostIP);
+  nconf.set('tcp-port', tcpHostPort);
 
   nconf.save(function (err) {
     if (err) {
@@ -153,6 +174,30 @@ function getPortList() {
 }
 
 
+/*** TCP ***/
+
+gamepadSerial.on('tcp:connect', () => {
+  sendLog('TCP: connected', false);
+});
+
+gamepadSerial.on('tcp:close', (msg) => {
+  sendLog('TCP: ' + msg, false);
+});
+
+gamepadSerial.on('tcp:error', (err) => {
+  sendLog('TCP: ' + err, false);
+});
+
+function openTCP() {
+  if (!tcpHostIP) return;
+  sendLog('TCP: connecting…');
+  gamepadSerial.connectTCP({
+    ip: tcpHostIP,
+    port: tcpHostPort
+  });
+}
+openTCP();
+
 /*** MIDI ***/
 
 const easymidi = require('easymidi');
@@ -175,10 +220,13 @@ easymidi.getInputs().forEach((inputName) => {
 // for better performance.
 setInterval(() => {
   if (midi_received) {
-    gamepadSerial.sendState((payload) => {
-      sendLog('SEND: ' + payload, false);
+    gamepadSerial.sendState((payload, senders) => {
+      sendLog(`SEND: (${senders.toString()}) ${payload}`, false);
       io.sockets.emit("GAMEPAD", gamepadSerial.getState());
     });
     midi_received = false;
   }
 }, 10);
+
+
+/*** TCP ***/

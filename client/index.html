@@ -306,6 +306,27 @@
 
       <br><br>
 
+      <input type="checkbox" id="checkboxTCP" v-model="tcpChecked" @change="checkTCP($event)">
+      <label for="checkboxTCP">TCP</label>
+
+      <br><br>
+
+      <form
+        id="tcpForm"
+        @submit="changeTcpHost"
+        action="https://vuejs.org/"
+        method="post"
+      >
+        <label for="">Host IP Address</label>
+        <input type="text" v-model="tcpHostIP" size="20" required>
+        :
+        <input type="text" v-model="tcpHostPort" size="10" required>
+
+        <button type="submit">Apply</button>
+      </form>
+
+      <br><br>
+
       <input type="checkbox" id="checkbox" v-model="serialChecked" @change="checkSerial($event)">
       <label for="checkbox">Serial</label>
 
@@ -396,11 +417,26 @@
       useJoystickChecked: false,
       options: [],
       messages: [],
-      gamepad: {},
+      gamepad: {
+        button: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        joyLeft: {
+          x: 128,
+          y: 128,
+        },
+        joyRight: {
+          x: 128,
+          y: 128,
+        },
+        hat: 255,
+        mode: 0,
+      },
       isTouchDevice: false,
       joyLeftX: 128,
       joyLeftY: 128,
       map: {},
+      tcpChecked: true,
+      tcpHostIP: '',
+      tcpHostPort: '',
     },
     created () {
       window.onbeforeunload = () => {
@@ -435,6 +471,11 @@
         this.map = data;
       });
 
+      socket.on('UPDATE_TCP_HOST', (ip, port) => {
+        this.tcpHostIP = ip;
+        this.tcpHostPort = port;
+      });
+
       if ('addEventListener' in document) {
         document.addEventListener('DOMContentLoaded', function() {
           FastClick.attach(document.body);
@@ -464,6 +505,26 @@
         else {
           socket.emit('CLOSE_SERIAL');
         }
+      },
+      checkTCP(e) {
+        if (this.tcpChecked) {
+          if (this.tcpHostIP) {
+            socket.emit('OPEN_TCP');
+          }
+        }
+        else {
+          socket.emit('CLOSE_TCP');
+        }
+      },
+      changeTcpHost(e) {
+        if (this.tcpHostIP && this.tcpHostPort) {
+          socket.emit('CHANGE_TCP_HOST', this.tcpHostIP, this.tcpHostPort);
+
+          if (this.tcpChecked) {
+            socket.emit('OPEN_TCP');
+          }
+        }
+        e.preventDefault();
       },
       checkUseJoy(e) {
         if (this.useJoystickChecked) {

@@ -1,6 +1,7 @@
 const { EventEmitter } = require('events');
 const SerialPort = require("serialport");
 const jspack = require("jspack").jspack;
+const net = require('net');
 
 const { BUTTONS, HAT, JOYSTICK } = require('./mapping');
 
@@ -10,6 +11,7 @@ class GamepadHandler extends EventEmitter {
     super();
     this.portPath = '';
     this.serial = {};
+    this.tcpClient = {};
     this.autoSendState = true;
     this.triggerTimers = {};
 
@@ -73,7 +75,6 @@ class GamepadHandler extends EventEmitter {
     });
   }
 
-  //erialPort.prototype.open = function (openCallback) {
 
   /**
    * Close serial
@@ -85,17 +86,95 @@ class GamepadHandler extends EventEmitter {
   }
 
   /**
+   * Connect to the tcp and setup the event handlers
+   * @param {Object} options
+   * @param {string} options.ip
+   * @param {int} [options.port = 2323]
+   * @event tcp:connect
+   * @event tcp:close
+   * @event tcp:error
+   * @event tcp:data
+   */
+  connectTCP({ip, port = 2323}) {
+    if (ip === undefined) return;
+    if (this.tcpClient.readyState) this.closeTCP();
+
+    // TCP
+    this.tcpClient = new net.Socket();
+
+    this.tcpClient.connect(port, ip, () => {
+      console.log('TCP Connected');
+      this.tcpClient.write('Hello, server! Love, Client.');
+      this.emit('tcp:connect', 'connected');
+    });
+
+    this.tcpClient.on('data', (data) => {
+      console.log('TCP Received: ' + data);
+      //this.tcpClient.destroy(); // kill client after server's response
+      this.emit('tcp:data', data);
+    });
+
+    this.tcpClient.on('error', (err) => {
+      var msg = '';
+      if (err.code == "ENOTFOUND") {
+        msg = "[ERROR] No device found at this address!";
+        this.tcpClient.destroy();
+      }
+      else if (err.code == "ECONNREFUSED") {
+        msg = "[ERROR] Connection refused! Please check the IP.";
+        this.tcpClient.destroy();
+      }
+      else {
+        msg = "[CONNECTION] Unexpected error! " + err.message + "     RESTARTING SERVER";
+      }
+      console.log(err, msg);
+      this.emit('tcp:error', msg);
+    });
+
+    this.tcpClient.on('close', (err) => {
+      console.log('TCP close', err);
+      if (err) {
+        this.emit('tcp:close', 'Connection failed');
+      }
+      else {
+        this.emit('tcp:close', 'Connection closed');
+      }
+    });
+  }
+
+  /**
+   * Close TCP
+   */
+  closeTCP() {
+    if (this.tcpClient.readyState !== "closed") {
+      this.tcpClient.destroy();
+    }
+  }
+
+  /**
    * Send data to Serial
    * @private
    * @param {Object} obj Gamepad object
    * @callback [next]
    */
-  _sendSerial(obj, next = (p) => {}) {
+  _sendSerial(obj, next = (p, senders) => {}) {
+    var senders = [];
+    var payload = this._pack(obj);
     if (this.serial.isOpen) {
-      var payload = this._pack(obj);
       this.serial.write(payload);
-      console.log('SEND: ' + payload);
-      next(payload);
+      senders.push("UART");
+    }
+    if (this.tcpClient.readyState == "open") {
+      var buffer = Buffer.from(payload);
+      this.tcpClient.write(buffer, (err) => {
+        if (err) {
+          this.emit('tcp:error', err);
+        }
+      });
+      senders.push("TCP");
+    }
+    if (senders.length) {
+      next(payload, senders);
     }
   }
 
