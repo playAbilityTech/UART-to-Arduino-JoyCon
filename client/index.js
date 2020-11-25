@@ -189,25 +189,13 @@ var HID = require('node-hid');
 var devices = HID.devices();
 //console.log(devices);
 
-const JoyCon = require('ns-joycon');
- 
-JoyCon.findControllers((devices) => {
-  console.log(devices);
-  // When found any device.
-  devices.forEach(async (device) => {
-    console.log(`Found a device (${device.meta.serialNumber})`);
-    // Add a handler for new device.
-    device.manageHandler('add', (packet) => {
-        console.log(device.meta.product, packet);
-    });
-    await device.enableIMU();
-  });
-});
-
 
 
 var GamePad = require('node-gamepad');
-var controller = new GamePad('switch/joycon-right');
+
+var controller = new GamePad('switch/joycon-left', {
+  debug: true
+});
 controller.connect();
 
 controller.on('a:press', function() {
@@ -217,18 +205,20 @@ controller.on('rightStick:move', function(data) {
     //console.log(data);
 });
 controller.on('data', function(data) {
-  //console.log(data);
+  console.log(data);
 });
 
-var controller2 = new GamePad('switch/joycon-left');
-controller2.connect();
+controller.setPlayerLEDs(4);
 
-controller2.on('up:press', function() {
-    console.log('up');
-});
-controller2.on('leftStick:move', function(data) {
-    //Sconsole.log(data);
-});
-controller2.on('data', function(data) {
- // console.log(data);
-});
+// var controller2 = new GamePad('switch/joycon-left');
+// controller2.connect();
+//
+// controller2.on('up:press', function() {
+//     console.log('up');
+// });
+// controller2.on('leftStick:move', function(data) {
+//     //Sconsole.log(data);
+// });
+// controller2.on('data', function(data) {
+//  // console.log(data);
+// });
