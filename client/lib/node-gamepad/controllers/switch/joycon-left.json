@@ -1,0 +1,72 @@
+{
+  "vendorID": 1406,
+  "productID": 8199,
+  "buttons": [
+    {
+      "pin": 3,
+      "value": 8,
+      "name": "a"
+    },
+    {
+      "pin": 3,
+      "value": 4,
+      "name": "b"
+    },
+    {
+      "pin": 3,
+      "value": 1,
+      "name": "y"
+    },
+    {
+      "pin": 3,
+      "value": 2,
+      "name": "x"
+    },
+    {
+      "pin": 4,
+      "value": 10,
+      "name": "home"
+    },
+    {
+      "pin": 4,
+      "value": 2,
+      "name": "plus"
+    },
+    {
+      "pin": 3,
+      "value": 40,
+      "name": "r"
+    },
+    {
+      "pin": 3,
+      "value": 80,
+      "name": "rl"
+    },
+    {
+      "pin": 3,
+      "value": 20,
+      "name": "sl"
+    },
+    {
+      "pin": 3,
+      "value": 10,
+      "name": "sr"
+    },
+    {
+      "pin": 4,
+      "value": 4,
+      "name": "rstick"
+    }
+  ],
+  "joysticks": [
+    {
+      "name": "rightStick",
+      "x": {
+        "pin": 11
+      },
+      "y": {
+        "pin": 10
+      }
+    }
+  ]
+}
