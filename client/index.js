@@ -8,7 +8,11 @@ const io = require('socket.io')(http, {
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
-const PORT = 3000;
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
+const PORT = process.env["PORT"] || 3000;
 let ip = require('ip').address();
 
 var arduinoPort = '';
@@ -177,20 +181,20 @@ function getPortList() {
 /*** TCP ***/
 
 gamepadSerial.on('tcp:connect', () => {
-  sendLog('TCP: connected', false);
+  sendLog('[TCP] connected', false);
 });
 
 gamepadSerial.on('tcp:close', (msg) => {
-  sendLog('TCP: ' + msg, false);
+  sendLog('[TCP] ' + msg, false);
 });
 
 gamepadSerial.on('tcp:error', (err) => {
-  sendLog('TCP: ' + err, false);
+  sendLog('[TCP] ' + err, false);
 });
 
 function openTCP() {
   if (!tcpHostIP) return;
-  sendLog('TCP: connecting…');
+  sendLog('[TCP] connecting…');
   gamepadSerial.connectTCP({
     ip: tcpHostIP,
     port: tcpHostPort
@@ -229,4 +233,36 @@ setInterval(() => {
 }, 10);
 
 
-/*** TCP ***/
+/*** GAMEPAD ***/
+
+const Gamecontroller = require('./lib/gamecontroller');
+const ctrl = new Gamecontroller('xbox360');
+// const Vendors = require('./lib/vendors.js');
+// ctrl._vendor = Vendors['xbox360'];
+
+var dev = Gamecontroller.getDevices();
+
+try {
+  ctrl.connect(function() {
+      console.log('Game On!');
+      ctrl.setLed(0x08);
+  });
+} catch (e) {
+  console.log("[HID] cannot open device !");
+}
+
+ctrl.on('X:press', function() {
+    console.log('X was pressed');
+});
+
+ctrl.on('X:release', function() {
+    console.log('X was released');
+});
+
+ctrl.on('data', function(data) {
+console.log(data);
+  gamepadSerial.sendState((payload, senders) => {
+    sendLog(`SEND: (${senders.toString()}) ${payload}`, false);
+    io.sockets.emit("GAMEPAD", gamepadSerial.getState());
+  });
+});
