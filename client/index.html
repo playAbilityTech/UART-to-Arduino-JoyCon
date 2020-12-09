@@ -461,6 +461,9 @@
       socket.on('UPDATE_PORT', (port) => {
         this.portSelected = port;
       });
+      socket.on('PLAYER_ID', (id) => {
+        document.title = `Player ${id}`;
+      });
       socket.on('GAMEPAD', (data) => {
         this.gamepad = data;
         if (this.gamepad.mode == 1) {
@@ -474,6 +477,11 @@
       socket.on('UPDATE_TCP_HOST', (ip, port) => {
         this.tcpHostIP = ip;
         this.tcpHostPort = port;
+      });
+
+      socket.on('UPDATE_CONFIG', (config) => {
+        this.serialChecked = config.useSerial || false;
+        this.tcpChecked = config.useTCP || false;
       });
 
       if ('addEventListener' in document) {
