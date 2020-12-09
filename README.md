@@ -12,7 +12,7 @@ In the `/client` folder.
 3. open `http://localhost:3000/`
 
 ##### Options:
-- PLAYER: `PLAYER=1 npm run dev` will set PORT to 3000 + PLAYER ID. Settings will be saved in its own config for each player id.
+- PLAYER: `PLAYER=1 npm run dev` will set PORT to 3000 + PLAYER ID. It will listen on MIDI channel of the same number to. Settings will be saved in its own config for each player id.
 - PORT: `PORT=3031 PLAYER=1 npm run dev` will run client with the specified port.
 
 ### Arduino

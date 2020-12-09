@@ -244,7 +244,7 @@ const midiHandler = require('./midiHandlers/hyruleBasic');
 easymidi.getInputs().forEach((inputName) => {
   const input = new easymidi.Input(inputName);
   input.on('message', (msg) => {
-    if (PlayerID && msg.channel+1 != PlayerID) return;
+    if (PlayerID && !isNaN(PlayerID) && msg.channel+1 != PlayerID) return;
     sendLog(`MIDI In (${inputName}): Ch ${msg.channel+1}: Note ${msg.note} ${msg._type} velocity ${msg.velocity}`, false);
     midiHandler(gamepadSerial, inputName, msg, () => {
       midi_received = true;
