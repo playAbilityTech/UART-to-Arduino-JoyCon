@@ -127,12 +127,12 @@ class GamepadHandler extends EventEmitter {
       else {
         msg = "[CONNECTION] Unexpected error! " + err.message + "     RESTARTING SERVER";
       }
-      console.log(err, msg);
+      console.log(msg);
       this.emit('tcp:error', msg);
     });
 
     this.tcpClient.on('close', (err) => {
-      console.log('TCP close', err);
+      console.log('[TCP] close', err);
       if (err) {
         this.emit('tcp:close', 'Connection failed');
       }
