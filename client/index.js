@@ -271,7 +271,7 @@ const Gamecontroller = require('./lib/gamecontroller');
 const ctrl = new Gamecontroller('xbox360');
 // const Vendors = require('./lib/vendors.js');
 // ctrl._vendor = Vendors['xbox360'];
-
+/*
 var dev = Gamecontroller.getDevices();
 
 try {
@@ -298,3 +298,4 @@ console.log(data);
     io.sockets.emit("GAMEPAD", gamepadSerial.getState());
   });
 });
+*/
