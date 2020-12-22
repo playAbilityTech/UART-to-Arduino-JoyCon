@@ -22,7 +22,7 @@ MPU6050 mpu;
 
 const int ADC_Max = 1023;  // 10 bit
 
-#define SCALING 4        // max Joystick value  at 90deg/SCALING.
+#define SCALING 6        // max Joystick value  at 90deg/SCALING.
 
 #define INTERRUPT_PIN 7  // use pin 2 on Arduino Uno & most boards
 
@@ -78,8 +78,8 @@ void getIMUData() {
     leftJoyX = (ypr[2]-rollOffset) * ADC_Max/M_PI*SCALING;
     leftJoyY = (ypr[1]-pitchOffset) * ADC_Max/M_PI*SCALING;
 
-    leftJoyX = map(leftJoyX, -512, 511, 255, 0);
-    leftJoyY = map(leftJoyY, -512, 511, 255, 0);
+    leftJoyX = map(leftJoyX, -512, 511, 0, 255);
+    leftJoyY = map(leftJoyY, -512, 511, 0, 255);
 
     leftJoyX = constrain(leftJoyX, 0, 255);
     leftJoyY = constrain(leftJoyY, 0, 255);
