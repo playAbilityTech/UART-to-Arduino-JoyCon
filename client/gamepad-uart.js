@@ -102,6 +102,8 @@ class GamepadHandler extends EventEmitter {
     // TCP
     this.tcpClient = new net.Socket();
 
+    this.tcpClient.setKeepAlive(true);
+
     this.tcpClient.connect(port, ip, () => {
       console.log('TCP Connected');
       this.tcpClient.write('Hello, server! Love, Client.');
