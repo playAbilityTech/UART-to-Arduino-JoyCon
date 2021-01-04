@@ -233,7 +233,7 @@ function openTCP() {
 }
 openTCP();
 
-/*** MIDI ***
+/*** MIDI ***/
 
 const easymidi = require('easymidi');
 var midi_received = false;
@@ -265,7 +265,7 @@ setInterval(() => {
 }, 10);
 
 
-/*** HID ***
+/*** HID ***/
 
 const Gamecontroller = require('./lib/gamecontroller');
 const ctrl = new Gamecontroller('xbox360');
