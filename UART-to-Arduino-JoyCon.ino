@@ -348,7 +348,7 @@ void loop() {
       Joystick.pressButton(5); // R
     }
     if (!digitalRead(A0)) {
-      Joystick.pressButton(10); // Lstick
+      Joystick.pressButton(2); // A
     }
 
     Joystick.sendState();
