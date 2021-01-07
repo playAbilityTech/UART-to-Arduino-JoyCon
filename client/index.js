@@ -145,7 +145,7 @@ useSerial = nconf.get(`Config${PlayerID}:useSerial`) || false;
 useTCP = nconf.get(`Config${PlayerID}:useTCP`) || false;
 
 function saveConf() {
-  nconf.load();
+  //nconf.load();
   nconf.set(`Config${PlayerID}:useSerial`, useSerial);
   nconf.set(`Config${PlayerID}:port`, arduinoPort);
   nconf.set(`Config${PlayerID}:useTCP`, useTCP);
