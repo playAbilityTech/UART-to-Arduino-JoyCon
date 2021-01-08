@@ -224,7 +224,7 @@ gamepadSerial.on('tcp:error', (err) => {
 });
 
 function openTCP() {
-  if (!tcpHostIP) return;
+  if (!tcpHostIP || !useTCP) return;
   sendLog('[TCP] connecting…');
   gamepadSerial.connectTCP({
     ip: tcpHostIP,
@@ -267,8 +267,8 @@ setInterval(() => {
 
 /*** HID ***/
 
-const Gamecontroller = require('./lib/gamecontroller');
-const ctrl = new Gamecontroller('xbox360');
+//const Gamecontroller = require('./lib/gamecontroller');
+//const ctrl = new Gamecontroller('xbox360');
 // const Vendors = require('./lib/vendors.js');
 // ctrl._vendor = Vendors['xbox360'];
 /*
@@ -299,3 +299,97 @@ console.log(data);
   });
 });
 */
+
+const Utils = require('./utils');
+const GameController = require('./gamepadHandlers/GameController');
+(async () => {
+    const gameController = new GameController();
+    await gameController.init();
+    gameController.on('button', (btn) => {
+
+      var data = gamepadSerial.getState();
+      switch (btn.button) {
+        case 'Y':
+          data.button[0] = btn.pressed ? 1 : 0;
+          break;
+        case 'B':
+          data.button[1] = btn.pressed ? 1 : 0;
+          break;
+        case 'A':
+          data.button[2] = btn.pressed ? 1 : 0;
+          break;
+        case 'X':
+          data.button[3] = btn.pressed ? 1 : 0;
+          break;
+        case 'BUMPER_LEFT':
+          data.button[4] = btn.pressed ? 1 : 0;
+          break;
+        case 'BUMPER_RIGHT':
+          data.button[5] = btn.pressed ? 1 : 0;
+          break;
+        case 'TRIGGER_LEFT':
+          data.button[6] = btn.pressed ? 1 : 0;
+          break;
+        case 'TRIGGER_RIGHT':
+          data.button[7] = btn.pressed ? 1 : 0;
+          break;
+        case 'BUTTON_MINUS':
+          data.button[8] = btn.pressed ? 1 : 0;
+          break;
+        case 'BUTTON_PLUS':
+          data.button[9] = btn.pressed ? 1 : 0;
+          break;
+        case 'THUMBSTICK_L_CLICK':
+          data.button[10] = btn.pressed ? 1 : 0;
+          break;
+        case 'THUMBSTICK_R_CLICK':
+          data.button[11] = btn.pressed ? 1 : 0;
+          break;
+        case 'BUTTON_HOME':
+          data.button[12] = btn.pressed ? 1 : 0;
+          break;
+        case 'BUTTON_CAPTURE':
+          data.button[13] = btn.pressed ? 1 : 0;
+          break;
+        // case '':
+        //   data.button[14] = btn.pressed ? 1 : 0;
+        // break;
+        // case '':
+        //   data.button[15] = btn.pressed ? 1 : 0;
+        // break;
+        //
+        case 'D_PAD_UP':
+          data.hat = btn.pressed ? 0 : 255;
+          break;
+        case 'D_PAD_RIGHT':
+          data.hat = btn.pressed ? 2 : 255;
+          break;
+        case 'D_PAD_DOWN':
+          data.hat = btn.pressed ? 4 : 255;
+          break;
+        case 'D_PAD_LEFT':
+          data.hat = btn.pressed ? 6 : 255;
+          break;
+        default:
+
+      }
+
+      gamepadSerial.setState(data);
+      gamepadSerial.sendState((payload, senders) => {
+        sendLog(`SEND: (${senders.toString()}) ${payload}`, false);
+      });
+    })
+    gameController.on('thumbsticks', (axis) => {
+      var data = gamepadSerial.getState();
+      data.joyLeft.x = Utils.map(axis[0], -1, 1, 0, 255);
+      data.joyLeft.y = Utils.map(axis[1], -1, 1, 0, 255);
+      data.joyRight.x = Utils.map(axis[2], -1, 1, 0, 255);
+      data.joyRight.y = Utils.map(axis[3], -1, 1, 0, 255);
+      data.mode = 1;
+      gamepadSerial.setState(data);
+      gamepadSerial.sendState((payload, senders) => {
+        sendLog(`SEND: (${senders.toString()}) ${payload}`, false);
+      });
+    })
+
+})();

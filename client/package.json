@@ -39,6 +39,7 @@
     "jspack": "0.0.4",
     "nconf": "^0.10.0",
     "net": "^1.0.2",
+    "puppeteer": "^5.5.0",
     "serialport": "^9.0.2",
     "socket.io": "^3.0.2"
   }
