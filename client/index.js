@@ -187,6 +187,7 @@ gamepadSerial.on('stateChange', (state) => {
 });
 
 function openSerial() {
+  if (!arduinoPort || !useSerial) return;
   messages = [];
   io.sockets.emit("MESSAGE", messages);
   gamepadSerial.connect({
