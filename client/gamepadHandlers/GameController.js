@@ -1,12 +1,12 @@
 //https://xaviergeerinck.com/post/coding/javascript/xbox-controller
 const puppeteer = require('puppeteer');
 const EventEmitter = require('events').EventEmitter;
-const buttons = require('./controllers/mapping.json');
+const buttons = require('./mapping.json');
 class GameController {
   constructor() {
     this.eventEmitter = new EventEmitter();
-    this.SIGNAL_POLL_INTERVAL_MS = 50;
-    this.THUMBSTICK_NOISE_THRESHOLD = 0.15;
+    this.SIGNAL_POLL_INTERVAL_MS = 10; // 100hz
+    this.THUMBSTICK_NOISE_THRESHOLD = 0.5;
   }
   on(event, cb) {
     this.eventEmitter.on(event, cb);
@@ -16,7 +16,7 @@ class GameController {
     const page = await browser.newPage();
     // Expose a handler to the page
     await page.exposeFunction('sendEventToProcessHandle', (event, msg) => {
-      this.eventEmitter.emit(event, JSON.stringify(msg));
+      this.eventEmitter.emit(event, msg);
     });
     await page.exposeFunction('consoleLog', (e) => {
       console.log(e);
@@ -28,6 +28,7 @@ class GameController {
       window.addEventListener("gamepadconnected", (e) => {
         let gp = navigator.getGamepads()[e.gamepad.index];
         window.sendEventToProcessHandle('GAMEPAD_CONNECTED');
+        var buttonsStatus = [];
         interval[e.gamepad.index] = setInterval(() => {
           gp = navigator.getGamepads()[e.gamepad.index];
           // [
@@ -36,15 +37,23 @@ class GameController {
           //    2 = THUMBSTICK_RIGHT_LEFT_RIGHT,
           //    3 = THUMBSTICK_RIGHT_UP_DOWN
           // ]
-          let sum = gp.axes.reduce((a, b) => a + b, 0);
-          if (Math.abs(sum) > THUMBSTICK_NOISE_THRESHOLD) {
+          // let sum = gp.axes.reduce((a, b) => a + b, 0);
+          // if (Math.abs(sum) > THUMBSTICK_NOISE_THRESHOLD) {
             window.sendEventToProcessHandle('thumbsticks', gp.axes);
-          }
+          // }
+
           for (let i = 0; i < gp.buttons.length; i++) {
-            if (gp.buttons[i].pressed == true) {
+            // status changed
+            if (gp.buttons[i].pressed !== buttonsStatus[i] && buttonsStatus.length >= gp.buttons.length) {
               window.sendEventToProcessHandle(buttons[i]);
-              window.sendEventToProcessHandle('button', buttons[i]);
+              window.sendEventToProcessHandle('button', {
+                gpIndex: e.gamepad.index,
+                index: i,
+                button: buttons[i],
+                pressed: gp.buttons[i].pressed
+              });
             }
+            buttonsStatus[i] = gp.buttons[i].pressed;
           }
         }, SIGNAL_POLL_INTERVAL_MS);
       });
