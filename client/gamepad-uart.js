@@ -41,7 +41,7 @@ class GamepadHandler extends EventEmitter {
    * @event error
    * @event data
    */
-  connect({portPath, initAutoSendState = true}) {
+  connect({portPath, initAutoSendState = true, reconnect = false}) {
     if (!portPath) return;
     if (this.serial.isOpen) this.close();
 
@@ -57,6 +57,7 @@ class GamepadHandler extends EventEmitter {
       if (err) {
         return console.log('Error opening port: ', err.message)
       }
+      reconnect = false;
       console.log(`Serial port '${this.portPath}' is opened.`);
       this.emit('open', err);
     });
@@ -64,12 +65,16 @@ class GamepadHandler extends EventEmitter {
     this.serial.on('close', function(port) {
       console.log(`Serial port '${port}' closed.`);
       this.emit('close', port);
+      reconnect = false;
       this.reconnect();
     }.bind(this, this.portPath));
 
     this.serial.on('error', (err) => {
-      console.log('error', err.toString());
-      this.emit('error', err);
+      if (!reconnect) {
+        var error = err.toString().replace(/Error: /g, '');
+        console.log('error:', error);
+        this.emit('error', error);
+      }
       this.reconnect();
     });
 
@@ -84,7 +89,8 @@ class GamepadHandler extends EventEmitter {
       //console.log('RECONNECTING TO ARDUINO');
       this.connect({
         portPath: this.portPath,
-        initAutoSendState: this.autoSendState
+        initAutoSendState: this.autoSendState,
+        reconnect: true
       });
     }, 2000);
   }
