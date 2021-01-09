@@ -58,13 +58,13 @@ class GameController {
           for (var i = 0; i < axis.length; i++) {
             // remove Deadzone
             if (Math.abs(axis[i]) <= THUMBSTICK_NOISE_THRESHOLD) {
-              axis[i] = map(0, -0.99, 0.98, -1, 1);
+              axis[i] = map(0, -0.95, 0.94, -1, 1);
             }
             else if (axis[i] > THUMBSTICK_NOISE_THRESHOLD) {
-              axis[i] = map(axis[i], THUMBSTICK_NOISE_THRESHOLD, 0.98, 0, 1);
+              axis[i] = map(axis[i], THUMBSTICK_NOISE_THRESHOLD, 0.95, 0, 1);
             }
             else if (axis[i] < THUMBSTICK_NOISE_THRESHOLD) {
-              axis[i] = map(axis[i], -THUMBSTICK_NOISE_THRESHOLD, -0.99, -0, -1);
+              axis[i] = map(axis[i], -THUMBSTICK_NOISE_THRESHOLD, -0.95, -0, -1);
             }
             window.sendEventToProcessHandle(`joy:${e.gamepad.index}:axis:${i}`, axis[i]);
           }
