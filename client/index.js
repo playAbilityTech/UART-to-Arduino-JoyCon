@@ -262,38 +262,36 @@ const loadConfig = async () => {
     for (var key in set) {
       if (set.hasOwnProperty(key)) {
         var action = set[key];
-        gameController.on(`joy:${action.joy}:${action.type}:${action.value}`, triggerAction.bind(null, key, action));
+        gameController.on(`joy:${action.joy}:${action.type}:${action.value}`, triggerAction.bind(null, i, key, action));
       }
     }
   }
 
-  gameController.on(`joy:update`, (id) => {
-    gamepads[id].sendState((payload, senders) => {
-      sendLog(`SEND: (${senders.toString()}) ${payload}`, false);
-    });
+  gameController.on(`joy:update`, (gp) => {
+    // console.log(gp);
+    for (var i = 0; i < gamepads.length; i++) {
+      gamepads[i].sendState((payload, senders) => {
+        sendLog(`SEND: (${senders.toString()} ${i}) ${payload}`, false);
+      });
+    }
   });
 };
 loadConfig();
 
-function triggerAction(key, action, value) {
+function triggerAction(index, key, action, value) {
   // console.log(key, action, value);
   if (action.type == 'button') {
-    console.log(key, action, value);
     if (key.startsWith('D_PAD_')) {
-      gamepads[action.joy].setHat(value ? key : "RELEASE");
+      gamepads[index].setHat(value ? key : "RELEASE");
     }
     else {
-      gamepads[action.joy].setButton(key, value);
+      gamepads[index].setButton(key, value);
     }
   }
   if (action.type == 'axis') {
-    gamepads[action.joy].setAxis(key, Utils.map(value, -1, 1, 0, 255));
-    gamepads[action.joy].setMode(1);
+    gamepads[index].setAxis(key, Utils.map(value, -1, 1, 0, 255));
+    gamepads[index].setMode(1);
   }
-  // console.log(gamepads[action.joy].getState());
-  // gamepads[action.joy].sendState((payload, senders) => {
-  //   sendLog(`SEND: (${senders.toString()}) ${payload}`, false);
-  // });
 }
 /*
     gameController.on('button', (btn) => {

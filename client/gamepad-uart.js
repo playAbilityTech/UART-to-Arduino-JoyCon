@@ -14,6 +14,7 @@ class GamepadHandler extends EventEmitter {
     this.tcpClient = {};
     this.autoSendState = true;
     this.triggerTimers = {};
+    this.lastState = "";
 
     this.gamepad = {
       button: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -63,16 +64,29 @@ class GamepadHandler extends EventEmitter {
     this.serial.on('close', function(port) {
       console.log(`Serial port '${port}' closed.`);
       this.emit('close', port);
+      this.reconnect();
     }.bind(this, this.portPath));
 
     this.serial.on('error', (err) => {
       console.log('error', err.toString());
       this.emit('error', err);
+      this.reconnect();
     });
 
     this.serial.on('data', (data) => {
       this.emit('data', data);
     });
+  }
+
+  reconnect() {
+    //console.log('INITIATING RECONNECT');
+    setTimeout(() => {
+      //console.log('RECONNECTING TO ARDUINO');
+      this.connect({
+        portPath: this.portPath,
+        initAutoSendState: this.autoSendState
+      });
+    }, 2000);
   }
 
 
@@ -162,6 +176,11 @@ class GamepadHandler extends EventEmitter {
   _sendSerial(obj, next = (p, senders) => {}) {
     var senders = [];
     var payload = this._pack(obj);
+
+    // check if data didin't changed
+    if (payload.join(",") == this.lastState) return;
+    this.lastState = payload.join(",");
+
     if (this.serial.isOpen) {
       this.serial.write(payload);
       senders.push("UART");

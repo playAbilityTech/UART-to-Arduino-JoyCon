@@ -61,10 +61,10 @@ class GameController {
               axis[i] = map(0, -0.99, 0.98, -1, 1);
             }
             else if (axis[i] > THUMBSTICK_NOISE_THRESHOLD) {
-              axis[i] = map(axis[i], THUMBSTICK_NOISE_THRESHOLD, 0.95, 0, 1);
+              axis[i] = map(axis[i], THUMBSTICK_NOISE_THRESHOLD, 0.98, 0, 1);
             }
             else if (axis[i] < THUMBSTICK_NOISE_THRESHOLD) {
-              axis[i] = map(axis[i], -THUMBSTICK_NOISE_THRESHOLD, -0.95, -0, -1);
+              axis[i] = map(axis[i], -THUMBSTICK_NOISE_THRESHOLD, -0.99, -0, -1);
             }
             window.sendEventToProcessHandle(`joy:${e.gamepad.index}:axis:${i}`, axis[i]);
           }
@@ -72,13 +72,18 @@ class GameController {
           for (let i = 0; i < gp.buttons.length; i++) {
             // status changed
             if (gp.buttons[i].pressed !== buttonsStatus[i] && buttonsStatus.length >= gp.buttons.length) {
-              window.sendEventToProcessHandle(buttons[i]);
+              // window.sendEventToProcessHandle(buttons[i]);
               window.sendEventToProcessHandle(`joy:${e.gamepad.index}:button:${i}`, gp.buttons[i].pressed);
             }
             buttonsStatus[i] = gp.buttons[i].pressed;
           }
 
-          window.sendEventToProcessHandle(`joy:update`, e.gamepad.index);
+          window.sendEventToProcessHandle(`joy:update`, {
+            index: gp.index,
+            id: gp.id,
+            axes: axis,
+            buttons: gp.buttons.map(a => a.pressed)
+          });
         }, SIGNAL_POLL_INTERVAL_MS);
       });
       window.addEventListener("gamepaddisconnected", (e) => {
