@@ -3,7 +3,7 @@ const SerialPort = require("serialport");
 const jspack = require("jspack").jspack;
 const net = require('net');
 
-const { BUTTONS, HAT, JOYSTICK } = require('./mapping');
+const { BUTTONS, HAT, JOYSTICK, STICKS } = require('./mapping');
 
 
 class GamepadHandler extends EventEmitter {
@@ -225,6 +225,7 @@ class GamepadHandler extends EventEmitter {
   setButton(button, value = 1) {
     var id = this._getButtonMappingValue(button);
     if (id >= this.gamepad.button.length) return;
+    value = value ? 1 : 0;
     this.gamepad.button[id] = this._safe_Uint8_t(value);
     this._stateUpdated();
     if (this.autoSendState) this.sendState();
@@ -310,6 +311,20 @@ class GamepadHandler extends EventEmitter {
   }
 
   /**
+   * Set Joystick Axis
+   * @param {int|String} axis
+   * @param {int} value (0---128---255)
+   */
+  setAxis(axis, value) {
+    //console.log(axis, value);
+    var {key, id} = this._getAxisMappingValue(axis);
+    if (!this.gamepad.hasOwnProperty(key)) return;
+    this.gamepad[key][id] = this._safe_Uint8_t(value);
+    this._stateUpdated();
+    if (this.autoSendState) this.sendState();
+  }
+
+  /**
    * Set Left Joystick direction
    * @param {String} direction
    */
@@ -383,6 +398,21 @@ class GamepadHandler extends EventEmitter {
       axis = JOYSTICK[value.toUpperCase()];
     }
     return axis;
+  }
+
+  /**
+   * Get value from the JOYSTICK KEY
+   * @private
+   * @param {String} value
+   */
+  _getAxisMappingValue(value) {
+    var key, id;
+    if (value.toUpperCase() in STICKS) {
+      var obj = STICKS[value.toUpperCase()];
+      key = obj[0];
+      id = obj[1];
+    }
+    return {key, id};
   }
 
   /**

@@ -3,22 +3,22 @@ const BUTTONS = {
   B: 1,
   A: 2,
   X: 3,
-  L: 4,
-  R: 5,
-  ZL: 6,
-  ZR: 7,
-  MINUS: 8,
-  PLUS: 9,
-  LSTICK: 10,
-  RSTICK: 11,
+  SHOULDER_LEFT: 4,
+  SHOULDER_RIGHT: 5,
+  TRIGGER_LEFT: 6,
+  TRIGGER_RIGHT: 7,
+  BACK: 8,
+  START: 9,
+  STICK_L_CLICK: 10,
+  STICK_R_CLICK: 11,
   HOME: 12,
   CAPTURE: 13,
 };
 const HAT = {
-  UP: 0,
-  RIGHT: 2,
-  DOWN: 4,
-  LEFT: 6,
+  D_PAD_UP: 0,
+  D_PAD_RIGHT: 2,
+  D_PAD_DOWN: 4,
+  D_PAD_LEFT: 6,
   RELEASE: 255,
 };
 const JOYSTICK = {
@@ -28,9 +28,16 @@ const JOYSTICK = {
   LEFT: {x: 0, y: 128},
   RELEASE: {x: 128, y: 128}
 };
+const STICKS = {
+  LEFT_STICK_X: ['joyLeft', 'x'],
+  LEFT_STICK_Y: ['joyLeft', 'y'],
+  RIGHT_STICK_X: ['joyRight', 'x'],
+  RIGHT_STICK_Y: ['joyRight', 'y']
+};
 
 module.exports = {
   BUTTONS,
   HAT,
   JOYSTICK,
+  STICKS,
 }

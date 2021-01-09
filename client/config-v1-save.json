@@ -1,0 +1,9 @@
+{
+  "Config0": {
+    "useSerial": true,
+    "port": "/dev/tty.wchusbserial14110",
+    "useTCP": false,
+    "tcp-ip": "192.168.137.116",
+    "tcp-port": "2323"
+  }
+}

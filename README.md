@@ -15,6 +15,8 @@ In the `/client` folder.
 - PLAYER: `PLAYER=1 npm run dev` will set PORT to 3000 + PLAYER ID. It will listen on MIDI channel of the same number to. Settings will be saved in its own config for each player id.
 - PORT: `PORT=3031 PLAYER=1 npm run dev` will run client with the specified port.
 
+- CONFIG file `npm start --config-file-path ./config_prod.json`
+
 ### Arduino
 Falsh the `.ino` file on a Arduino Leonardo,  Arduino Micro or ATmega32U4 based microcontroller.
 
