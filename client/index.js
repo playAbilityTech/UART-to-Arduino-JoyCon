@@ -124,6 +124,7 @@ nconf.argv();
 nconf.env();
 nconf.use('file', { file: './config.json' });
 nconf.load();
+var defaultGamepadsConfig = nconf.get(`default_gamepad_set`) || {};
 var gamepadsConfig = nconf.get(`gamepads`) || [{}];
 
 function saveConf() {
@@ -191,6 +192,7 @@ function getPortList() {
     }
   );
 }
+//getPortList();
 
 
 /*** TCP ***
@@ -259,10 +261,15 @@ const loadConfig = async () => {
 
   for (var i = 0; i < gamepadsConfig.length; i++) {
     var set = gamepadsConfig[i].gamepad_set;
+    var joy = 0;
+    if (Number.isInteger(set)) { //use default_gamepad_set
+      joy = parseInt(set);
+      set = defaultGamepadsConfig;
+    }
     for (var key in set) {
       if (set.hasOwnProperty(key)) {
         var action = set[key];
-        gameController.on(`joy:${action.joy}:${action.type}:${action.value}`, triggerAction.bind(null, i, key, action));
+        gameController.on(`joy:${action.joy || joy}:${action.type}:${action.value}`, triggerAction.bind(null, i, key, action));
       }
     }
   }
