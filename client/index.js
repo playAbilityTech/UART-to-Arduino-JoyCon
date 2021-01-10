@@ -125,6 +125,7 @@ nconf.env();
 nconf.use('file', { file: './config.json' });
 nconf.load();
 var defaultGamepadsConfig = nconf.get(`default_gamepad_set`) || {};
+var JoyMappingConfig = nconf.get(`joy_input_mapping`) || [];
 var gamepadsConfig = nconf.get(`gamepads`) || [{}];
 
 function saveConf() {
@@ -269,10 +270,23 @@ const loadConfig = async () => {
     for (var key in set) {
       if (set.hasOwnProperty(key)) {
         var action = set[key];
-        gameController.on(`joy:${action.joy || joy}:${action.type}:${action.value}`, triggerAction.bind(null, i, key, action));
+        var id = action.joy || joy;
+        gameController.on(`joy:${id}:${action.type}:${action.value}`, triggerAction.bind(null, i, key, action));
       }
     }
   }
+
+  gameController.updateMapping(JoyMappingConfig);
+
+  gameController.on(`GAMEPAD_CONNECTED`, (gp) => {
+    console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
+    gp.index, gp.id,
+    gp.buttons.length, gp.axes.length);
+  });
+
+  gameController.on(`GAMEPAD_DISCONNECTED`, (id) => {
+
+  });
 
   gameController.on(`joy:update`, (gp) => {
     // console.log(gp);

@@ -7,9 +7,13 @@ class GameController {
     this.eventEmitter = new EventEmitter();
     this.SIGNAL_POLL_INTERVAL_MS = 10; // 10 = 100hz
     this.THUMBSTICK_NOISE_THRESHOLD = 0.15;
+    this.gp_input_mapping = null;
   }
   on(event, cb) {
     this.eventEmitter.on(event, cb);
+  }
+  updateMapping(obj) {
+    this.gp_input_mapping = obj;
   }
   async init() {
     const browser = await puppeteer.launch();
@@ -17,6 +21,20 @@ class GameController {
     // Expose a handler to the page
     await page.exposeFunction('sendEventToProcessHandle', (event, msg) => {
       this.eventEmitter.emit(event, msg);
+    });
+    await page.exposeFunction('sendEventToJoyHandle', (id, type, index, value) => {
+      var output = id;
+      if (this.gp_input_mapping != null) {
+        var key = `JOY_INPUT_${id}`;
+        if (key in this.gp_input_mapping) {
+          output = this.gp_input_mapping[key];
+          this.eventEmitter.emit(`joy:${output}:${type}:${index}`, value);
+        }
+        else {
+          return;
+        }
+      }
+      this.eventEmitter.emit(`joy:${output}:${type}:${index}`, value);
     });
     await page.exposeFunction('consoleLog', (e) => {
       console.log(e);
@@ -28,6 +46,8 @@ class GameController {
         return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
       }
 
+      window.consoleLog("[info] To detect gamepad press buttons to wake it up.");
+
       let interval = {};
       window.addEventListener("gamepadconnected", (e) => {
         // e.gamepad.vibrationActuator.playEffect("dual-rumble", {
@@ -36,8 +56,14 @@ class GameController {
         //   weakMagnitude: 1.0,
         //   strongMagnitude: 1.0
         // });
+
         let gp = navigator.getGamepads()[e.gamepad.index];
-        window.sendEventToProcessHandle('GAMEPAD_CONNECTED');
+        window.sendEventToProcessHandle('GAMEPAD_CONNECTED', {
+          index: gp.index,
+          id: gp.id,
+          buttons: gp.buttons,
+          axes: gp.axes
+        });
         var buttonsStatus = [];
         interval[e.gamepad.index] = setInterval(() => {
           gp = navigator.getGamepads()[e.gamepad.index];
@@ -66,14 +92,16 @@ class GameController {
             else if (axis[i] < THUMBSTICK_NOISE_THRESHOLD) {
               axis[i] = map(axis[i], -THUMBSTICK_NOISE_THRESHOLD, -0.95, -0, -1);
             }
-            window.sendEventToProcessHandle(`joy:${e.gamepad.index}:axis:${i}`, axis[i]);
+            //window.sendEventToProcessHandle(`joy:${gp.index}:axis:${i}`, axis[i]);
+            window.sendEventToJoyHandle(gp.index, 'axis', i, axis[i]);
           }
 
           for (let i = 0; i < gp.buttons.length; i++) {
             // status changed
             if (gp.buttons[i].pressed !== buttonsStatus[i] && buttonsStatus.length >= gp.buttons.length) {
               // window.sendEventToProcessHandle(buttons[i]);
-              window.sendEventToProcessHandle(`joy:${e.gamepad.index}:button:${i}`, gp.buttons[i].pressed);
+              //window.sendEventToProcessHandle(`joy:${gp.index}:button:${i}`, gp.buttons[i].pressed);
+              window.sendEventToJoyHandle(gp.index, 'button', i, gp.buttons[i].pressed);
             }
             buttonsStatus[i] = gp.buttons[i].pressed;
           }
@@ -87,7 +115,9 @@ class GameController {
         }, SIGNAL_POLL_INTERVAL_MS);
       });
       window.addEventListener("gamepaddisconnected", (e) => {
-        window.sendEventToProcessHandle('GAMEPAD_DISCONNECTED');
+        window.sendEventToProcessHandle('GAMEPAD_DISCONNECTED', {
+          index: gp.index
+        });
         window.consoleLog("Gamepad disconnected at index " + gp.index);
         clearInterval(interval[e.gamepad.index]);
       });
