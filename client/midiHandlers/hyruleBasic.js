@@ -8,6 +8,7 @@ const { delay } = require('../utils');
  * @callback sendState Trigger if state need to be updated
  */
 const DemoMidiMapping = (gamepadSerial, inputName, msg, sendState = () => {}) => {
+  if (msg._type == 'noteoff') return;
   console.log(inputName, msg);
   var send_state = true;
 

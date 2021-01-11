@@ -1,6 +1,6 @@
 {
   "joy_input_mapping": {
-    "JOY_INPUT_2": 0
+    "JOY_INPUT_1": 0
   },
   "gamepads": [
     {
@@ -10,58 +10,223 @@
       "serial_enabled": true,
       "serial_port": "/dev/tty.SLAB_USBtoUART",
       "gamepad_set": {
-        "B"              : { "type": "button", "joy": 0, "value": 0 },
-        "A"              : { "type": "button", "joy": 0, "value": 1 },
-        "Y"              : { "type": "button", "joy": 0, "value": 2 },
-        "X"              : { "type": "button", "joy": 0, "value": 3 },
-        "SHOULDER_LEFT"  : { "type": "button", "joy": 0, "value": 4 },
-        "SHOULDER_RIGHT" : { "type": "button", "joy": 0, "value": 5 },
-        "TRIGGER_LEFT"   : { "type": "button", "joy": 0, "value": 6 },
-        "TRIGGER_RIGHT"  : { "type": "button", "joy": 0, "value": 7 },
-        "BACK"           : { "type": "button", "joy": 0, "value": 8 },
-        "START"          : { "type": "button", "joy": 0, "value": 9 },
-        "STICK_L_CLICK"  : { "type": "button", "joy": 0, "value": 10 },
-        "STICK_R_CLICK"  : { "type": "button", "joy": 0, "value": 11 },
-        "D_PAD_UP"       : { "type": "button", "joy": 0, "value": 12 },
-        "D_PAD_DOWN"     : { "type": "button", "joy": 0, "value": 13 },
-        "D_PAD_LEFT"     : { "type": "button", "joy": 0, "value": 14 },
-        "D_PAD_RIGHT"    : { "type": "button", "joy": 0, "value": 15 },
-        "HOME"           : { "type": "button", "joy": 0, "value": 16 },
-        "CAPTURE"        : { "type": "button", "joy": 0, "value": 17 },
-        "LEFT_STICK_X"   : { "type": "axis", "joy": 0, "value": 0, "reverse": false },
-        "LEFT_STICK_Y"   : { "type": "axis", "joy": 0, "value": 1, "reverse": false },
-        "RIGHT_STICK_X"  : { "type": "axis", "joy": 0, "value": 2, "reverse": false },
-        "RIGHT_STICK_Y"  : { "type": "axis", "joy": 0, "value": 3, "reverse": false }
-      }
+        "B": {
+          "type": "button",
+          "joy": 0,
+          "value": 0
+        },
+        "A": {
+          "type": "button",
+          "joy": 0,
+          "value": 1
+        },
+        "Y": {
+          "type": "button",
+          "joy": 0,
+          "value": 2
+        },
+        "X": {
+          "type": "button",
+          "joy": 0,
+          "value": 3
+        },
+        "SHOULDER_LEFT": {
+          "type": "button",
+          "joy": 0,
+          "value": 4
+        },
+        "SHOULDER_RIGHT": {
+          "type": "button",
+          "joy": 0,
+          "value": 5
+        },
+        "TRIGGER_LEFT": {
+          "type": "button",
+          "joy": 0,
+          "value": 6
+        },
+        "TRIGGER_RIGHT": {
+          "type": "button",
+          "joy": 0,
+          "value": 7
+        },
+        "BACK": {
+          "type": "button",
+          "joy": 0,
+          "value": 8
+        },
+        "START": {
+          "type": "button",
+          "joy": 0,
+          "value": 9
+        },
+        "STICK_L_CLICK": {
+          "type": "button",
+          "joy": 0,
+          "value": 10
+        },
+        "STICK_R_CLICK": {
+          "type": "button",
+          "joy": 0,
+          "value": 11
+        },
+        "D_PAD_UP": {
+          "type": "button",
+          "joy": 0,
+          "value": 12
+        },
+        "D_PAD_DOWN": {
+          "type": "button",
+          "joy": 0,
+          "value": 13
+        },
+        "D_PAD_LEFT": {
+          "type": "button",
+          "joy": 0,
+          "value": 14
+        },
+        "D_PAD_RIGHT": {
+          "type": "button",
+          "joy": 0,
+          "value": 15
+        },
+        "HOME": {
+          "type": "button",
+          "joy": 0,
+          "value": 16
+        },
+        "CAPTURE": {
+          "type": "button",
+          "joy": 0,
+          "value": 17
+        },
+        "LEFT_STICK_X": {
+          "type": "axis",
+          "joy": 0,
+          "value": 0,
+          "reverse": false
+        },
+        "LEFT_STICK_Y": {
+          "type": "axis",
+          "joy": 0,
+          "value": 1,
+          "reverse": false
+        },
+        "RIGHT_STICK_X": {
+          "type": "axis",
+          "joy": 0,
+          "value": 2,
+          "reverse": false
+        },
+        "RIGHT_STICK_Y": {
+          "type": "axis",
+          "joy": 0,
+          "value": 3,
+          "reverse": false
+        }
+      },
+      "joy_listeners": [
+        true
+      ]
     },
     {
       "serial_enabled": true,
-      "serial_port": "/dev/tty.wchusbserial14110",
-      "gamepad_set": 1
+      "serial_port": "/dev/tty.usbserial-14YRLLWA",
+      "midi_input": 0,
+      "midi_handler": "hyruleBasic",
+      "joy_listeners": []
     }
   ],
-  "default_gamepad_set": {
-    "B"              : { "type": "button", "value": 0 },
-    "A"              : { "type": "button", "value": 1 },
-    "Y"              : { "type": "button", "value": 2 },
-    "X"              : { "type": "button", "value": 3 },
-    "SHOULDER_LEFT"  : { "type": "button", "value": 4 },
-    "SHOULDER_RIGHT" : { "type": "button", "value": 5 },
-    "TRIGGER_LEFT"   : { "type": "button", "value": 6 },
-    "TRIGGER_RIGHT"  : { "type": "button", "value": 7 },
-    "BACK"           : { "type": "button", "value": 8 },
-    "START"          : { "type": "button", "value": 9 },
-    "STICK_L_CLICK"  : { "type": "button", "value": 10 },
-    "STICK_R_CLICK"  : { "type": "button", "value": 11 },
-    "D_PAD_UP"       : { "type": "button", "value": 12 },
-    "D_PAD_DOWN"     : { "type": "button", "value": 13 },
-    "D_PAD_LEFT"     : { "type": "button", "value": 14 },
-    "D_PAD_RIGHT"    : { "type": "button", "value": 15 },
-    "HOME"           : { "type": "button", "value": 16 },
-    "CAPTURE"        : { "type": "button", "value": 17 },
-    "LEFT_STICK_X"   : { "type": "axis",   "value": 0 },
-    "LEFT_STICK_Y"   : { "type": "axis",   "value": 1 },
-    "RIGHT_STICK_X"  : { "type": "axis",   "value": 2 },
-    "RIGHT_STICK_Y"  : { "type": "axis",   "value": 3 }
+  "gamepad_set": {
+    "default": {
+      "B": {
+        "type": "button",
+        "value": 0
+      },
+      "A": {
+        "type": "button",
+        "value": 1
+      },
+      "Y": {
+        "type": "button",
+        "value": 2
+      },
+      "X": {
+        "type": "button",
+        "value": 3
+      },
+      "SHOULDER_LEFT": {
+        "type": "button",
+        "value": 4
+      },
+      "SHOULDER_RIGHT": {
+        "type": "button",
+        "value": 5
+      },
+      "TRIGGER_LEFT": {
+        "type": "button",
+        "value": 6
+      },
+      "TRIGGER_RIGHT": {
+        "type": "button",
+        "value": 7
+      },
+      "BACK": {
+        "type": "button",
+        "value": 8
+      },
+      "START": {
+        "type": "button",
+        "value": 9
+      },
+      "STICK_L_CLICK": {
+        "type": "button",
+        "value": 10
+      },
+      "STICK_R_CLICK": {
+        "type": "button",
+        "value": 11
+      },
+      "D_PAD_UP": {
+        "type": "button",
+        "value": 12
+      },
+      "D_PAD_DOWN": {
+        "type": "button",
+        "value": 13
+      },
+      "D_PAD_LEFT": {
+        "type": "button",
+        "value": 14
+      },
+      "D_PAD_RIGHT": {
+        "type": "button",
+        "value": 15
+      },
+      "HOME": {
+        "type": "button",
+        "value": 16
+      },
+      "CAPTURE": {
+        "type": "button",
+        "value": 17
+      },
+      "LEFT_STICK_X": {
+        "type": "axis",
+        "value": 0
+      },
+      "LEFT_STICK_Y": {
+        "type": "axis",
+        "value": 1
+      },
+      "RIGHT_STICK_X": {
+        "type": "axis",
+        "value": 2
+      },
+      "RIGHT_STICK_Y": {
+        "type": "axis",
+        "value": 3
+      }
+    }
   }
 }

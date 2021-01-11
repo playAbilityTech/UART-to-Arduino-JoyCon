@@ -64,6 +64,7 @@ class GameController {
           buttons: gp.buttons,
           axes: gp.axes
         });
+        var lastState = "";
         var buttonsStatus = [];
         interval[e.gamepad.index] = setInterval(() => {
           gp = navigator.getGamepads()[e.gamepad.index];
@@ -106,12 +107,23 @@ class GameController {
             buttonsStatus[i] = gp.buttons[i].pressed;
           }
 
-          window.sendEventToProcessHandle(`joy:update`, {
-            index: gp.index,
-            id: gp.id,
-            axes: axis,
-            buttons: gp.buttons.map(a => a.pressed)
-          });
+          var stateString = axis.join(',') + ',' + gp.buttons.map(a => a.pressed).join(',');
+
+          if (lastState != stateString) {
+            window.sendEventToJoyHandle(gp.index, 'update', 0, {
+              index: gp.index,
+              id: gp.id,
+              axes: axis,
+              buttons: gp.buttons.map(a => a.pressed)
+            });
+            // window.sendEventToProcessHandle(`joy:update`, {
+            //   index: gp.index,
+            //   id: gp.id,
+            //   axes: axis,
+            //   buttons: gp.buttons.map(a => a.pressed)
+            // });
+          }
+          lastState = stateString;
         }, SIGNAL_POLL_INTERVAL_MS);
       });
       window.addEventListener("gamepaddisconnected", (e) => {

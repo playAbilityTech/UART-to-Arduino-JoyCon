@@ -25,6 +25,10 @@ app.get('/', function (req, res) {
   res.sendFile(__dirname + '/index.html');
 });
 
+app.get('/:id', function (req, res) {
+  res.sendFile(__dirname + '/controls.html');
+});
+
 io.on('connection', (socket) => {
   console.log('a user connected');
 
@@ -36,30 +40,30 @@ io.on('connection', (socket) => {
     console.log('user disconnected', error);
   });
 
-  socket.on('UPDATE_GAMEPAD', function(data) {
-    gamepadSerial.setState(data);
-    gamepadSerial.sendState((payload, senders) => {
-      sendLog(`SEND: (${senders.toString()}) ${payload}`, false);
+  socket.on('UPDATE_GAMEPAD', function(index, data) {
+    console.log(index, data);
+    gamepads[index].setState(data);
+    gamepads[index].sendState((payload, senders) => {
+      sendLog(`SEND: (${senders.toString()} ${index}) ${payload}`, false);
     });
   });
 
-  socket.on('CHANGE_SERIAL_PORT', function(port) {
-    arduinoPort = port || '';
+  socket.on('CHANGE_SERIAL_PORT', function(index, port) {
+    gamepadsConfig[index].serial_port = port || '';
     saveConf();
-    io.sockets.emit("UPDATE_PORT", arduinoPort);
+    io.sockets.emit("UPDATE_PORT", index, gamepadsConfig[index].serial_port);
   });
 
-  socket.on('OPEN_SERIAL', function() {
-    useSerial = true;
+  socket.on('OPEN_SERIAL', function(index) {
+    gamepadsConfig[index].serial_enabled = true;
     saveConf();
-    openSerial();
+    gamepads[index].openSerial();
   });
 
-  socket.on('CLOSE_SERIAL', function() {
-    sendLog(`Serial port closed.`, false);
-    useSerial = false;
+  socket.on('CLOSE_SERIAL', function(index) {
+    gamepadsConfig[index].serial_enabled = false;
     saveConf();
-    gamepadSerial.close();
+    gamepads[index].close();
   });
 
   socket.on('GET_PORT_LIST', function() {
@@ -68,32 +72,38 @@ io.on('connection', (socket) => {
 
   getPortList();
 
-  socket.on('CHANGE_TCP_HOST', function(hostIp, HostPort) {
-    tcpHostIP = hostIp;
-    tcpHostPort = HostPort;
+  socket.on('CHANGE_TCP_HOST', function(index, hostIp, HostPort) {
+    gamepadsConfig[index].tcp_ip = hostIp;
+    gamepadsConfig[index].tcp_port = HostPort;
     saveConf();
-    //io.sockets.emit("UPDATE_TCP_HOST", tcpHostIP, tcpHostPort);
+    io.sockets.emit("UPDATE_TCP_HOST", index, tcpHostIP, tcpHostPort);
   });
 
-  socket.on('OPEN_TCP', function() {
-    useTCP = true;
+  socket.on('OPEN_TCP', function(index) {
+    gamepadsConfig[index].tcp_enabled = true;
     saveConf();
-    openTCP();
+    gamepads[index].openTCP();
   });
-  socket.on('CLOSE_TCP', function() {
-    useTCP = false;
+  socket.on('CLOSE_TCP', function(index) {
+    gamepadsConfig[index].tcp_enabled = false;
     saveConf();
-    gamepadSerial.closeTCP();
+    gamepads[index].closeTCP();
   });
 
-  //io.sockets.emit("GAMEPAD", gamepadSerial.getState());
   io.sockets.emit("MESSAGE", messages);
 
-  //io.sockets.emit("MAPPING", gamepadSerial.getButtonsMapping());
-  // io.sockets.emit("UPDATE_CONFIG", {
-  //   useTCP: useTCP,
-  //   useSerial: useSerial
-  // });
+  for (var i = 0; i < gamepads.length; i++) {
+    io.sockets.emit("GAMEPAD", i, gamepads[i].getState());
+
+    io.sockets.emit("MAPPING", i, gamepads[i].getButtonsMapping());
+    io.sockets.emit("UPDATE_CONFIG", i, {
+      useTCP: gamepadsConfig[i].tcp_enabled,
+      useSerial: gamepadsConfig[i].serial_enabled
+    });
+    io.sockets.emit("UPDATE_TCP_HOST", i, gamepadsConfig[i].tcp_ip, gamepadsConfig[i].tcp_port);
+
+    io.sockets.emit("UPDATE_PORT", i, gamepadsConfig[i].serial_port);
+  }
 });
 
 var server = http.listen(PORT, () => {
@@ -120,17 +130,17 @@ function sendLog(msg, logit = true) {
 /*** CONFIG ***/
 
 const nconf = require('nconf');
-nconf.argv();
-nconf.env();
+nconf.env().argv();
 nconf.use('file', { file: './config.json' });
 nconf.load();
-var defaultGamepadsConfig = nconf.get(`default_gamepad_set`) || {};
+var gamepadSetConfig = nconf.get(`gamepad_set`) || {};
 var JoyMappingConfig = nconf.get(`joy_input_mapping`) || [];
 var gamepadsConfig = nconf.get(`gamepads`) || [{}];
 
 function saveConf() {
   //nconf.load();
   nconf.set(`gamepads`, gamepadsConfig);
+  nconf.set(`joy_input_mapping`, JoyMappingConfig);
 
   nconf.save(function (err) {
     if (err) {
@@ -142,6 +152,44 @@ function saveConf() {
 }
 
 
+/*** MIDI ***/
+
+const easymidi = require('easymidi');
+const EventEmitter = require('events').EventEmitter;
+var EventMIDI = new EventEmitter();
+var midi_received = [];
+
+// Get message from all midi input and all channels
+easymidi.getInputs().forEach((inputName) => {
+  console.log('MIDI', inputName);
+  const input = new easymidi.Input(inputName);
+  input.on('message', (msg) => {
+    sendLog(`MIDI In (${inputName}): Ch ${msg.channel+1}: Note ${msg.note} ${msg._type} velocity ${msg.velocity}`, false);
+    EventMIDI.emit('note', {
+      inputName: inputName,
+      msg: msg
+    });
+    // midiHandler(gamepadSerial, inputName, msg, () => {
+    //   midi_received = true;
+    // });
+  });
+});
+
+// Send state outside off the MIDI loop
+// for better performance.
+setInterval(() => {
+  for (var i = 0; i < midi_received.length; i++) {
+    if (gamepadsConfig[i].midi_handler != null && midi_received[i]) {
+      gamepads[i].sendState((payload, senders) => {
+        sendLog(`SEND: (${senders.toString()} ${i}) ${payload}`, false);
+        //io.sockets.emit("GAMEPAD", gamepadSerial.getState());
+      });
+      midi_received[i] = false;
+    }
+  }
+}, 10);
+
+
 /*** GAMEPADS ***/
 
 const GamepadsHandler = require("./gamepad-uart");
@@ -151,21 +199,26 @@ for (var i = 0; i < gamepadsConfig.length; i++) {
   //console.log(gamepadsConfig[i]);
   gamepads[i] = new GamepadsHandler();
 
-  gamepads[i].on('open', () => {
-    sendLog(`[Serial ${i}] port is opened.`, false);
+
+  /*** SERIAL UART ***/
+
+  gamepads[i].on('open', (path) => {
+    sendLog(`[Serial] port '${path}' is opened.`, false);
   });
-  gamepads[i].on('close', (port) => {
-    //sendLog(`Serial port ${port} closed.`, false);
+  gamepads[i].on('close', (port, err) => {
+    if (!err) {
+      sendLog(`[Serial] port ${port} closed.`, false);
+    }
   });
   gamepads[i].on('error', (err) => {
-    sendLog(`[Serial ${i}] ${err.toString()}`, false);
+    sendLog(`[Serial] ${err.toString()}`, false);
   });
 
-  gamepads[i].on('stateChange', (state) => {
-    io.sockets.emit("GAMEPAD", i, state);
-  });
+  gamepads[i].on('stateChange', function(index, state) {
+    io.sockets.emit("GAMEPAD", index, state);
+  }.bind(null, i));
 
-  gamepads[i].openSerial = () => {
+  gamepads[i].openSerial = function(i) {
     if (!gamepadsConfig[i].serial_port || !gamepadsConfig[i].serial_enabled) return;
     messages = [];
     io.sockets.emit("MESSAGE", messages);
@@ -173,19 +226,56 @@ for (var i = 0; i < gamepadsConfig.length; i++) {
       portPath: gamepadsConfig[i].serial_port,
       initAutoSendState: false
     });
+  }.bind(null, i);
+  gamepads[i].openSerial();
+
+
+  /*** TCP ***/
+
+  gamepads[i].on('tcp:connect', () => {
+    sendLog('[TCP] connected', false);
+  });
+
+  gamepads[i].on('tcp:close', (msg) => {
+    sendLog('[TCP] ' + msg, false);
+  });
+
+  gamepads[i].on('tcp:error', (err) => {
+    sendLog('[TCP] ' + err, false);
+  });
+
+  gamepads[i].openTCP = () => {
+    if (!gamepadsConfig[i].tcp_ip || !gamepadsConfig[i].tcp_enabled) return;
+    sendLog('[TCP] connecting…');
+    gamepads[i].connectTCP({
+      ip: gamepadsConfig[i].tcp_ip,
+      port: gamepadsConfig[i].tcp_port
+    });
+  }
+  gamepads[i].openTCP();
+
+
+  /*** MIDI ***/
+
+  if (gamepadsConfig[i].midi_handler) {
+    let midiHandler = require(`./midiHandlers/${gamepadsConfig[i].midi_handler}`);
+    EventMIDI.on('note', function(index, data) {
+      midiHandler(gamepads[index], data.inputName, data.msg, () => {
+        midi_received[index] = true;
+      });
+    }.bind(null, i));
   }
 
-  gamepads[i].openSerial();
 }
 
 
 /*** SERIAL UART ***/
 const SerialPort = require("serialport");
 
-function getPortList() {
+function getPortList(log=false) {
   SerialPort.list().then(
     ports => {
-      //console.log(ports);
+      if (log) console.log("Serial ports available:", ports.map(a => a.path));
       io.sockets.emit("PORT_LIST", ports);
     },
     err => {
@@ -193,63 +283,7 @@ function getPortList() {
     }
   );
 }
-//getPortList();
-
-
-/*** TCP ***
-
-gamepadSerial.on('tcp:connect', () => {
-  sendLog('[TCP] connected', false);
-});
-
-gamepadSerial.on('tcp:close', (msg) => {
-  sendLog('[TCP] ' + msg, false);
-});
-
-gamepadSerial.on('tcp:error', (err) => {
-  sendLog('[TCP] ' + err, false);
-});
-
-function openTCP() {
-  if (!tcpHostIP || !useTCP) return;
-  sendLog('[TCP] connecting…');
-  gamepadSerial.connectTCP({
-    ip: tcpHostIP,
-    port: tcpHostPort
-  });
-}
-openTCP();
-
-/*** MIDI ***
-
-const easymidi = require('easymidi');
-var midi_received = false;
-
-const midiHandler = require('./midiHandlers/hyruleBasic');
-
-// Get message from all midi input and all channels
-easymidi.getInputs().forEach((inputName) => {
-  const input = new easymidi.Input(inputName);
-  input.on('message', (msg) => {
-    if (PlayerID && !isNaN(PlayerID) && msg.channel+1 != PlayerID) return;
-    sendLog(`MIDI In (${inputName}): Ch ${msg.channel+1}: Note ${msg.note} ${msg._type} velocity ${msg.velocity}`, false);
-    midiHandler(gamepadSerial, inputName, msg, () => {
-      midi_received = true;
-    });
-  });
-});
-
-// Send state outside off the MIDI loop
-// for better performance.
-setInterval(() => {
-  if (midi_received) {
-    gamepadSerial.sendState((payload, senders) => {
-      sendLog(`SEND: (${senders.toString()}) ${payload}`, false);
-      io.sockets.emit("GAMEPAD", gamepadSerial.getState());
-    });
-    midi_received = false;
-  }
-}, 10);
+getPortList(true);
 
 
 /*** HID ***/
@@ -262,18 +296,29 @@ const loadConfig = async () => {
 
   for (var i = 0; i < gamepadsConfig.length; i++) {
     var set = gamepadsConfig[i].gamepad_set;
-    var joy = 0;
-    if (Number.isInteger(set)) { //use default_gamepad_set
-      joy = parseInt(set);
-      set = defaultGamepadsConfig;
+    var joy = 'joy_input' in gamepadsConfig[i] ? gamepadsConfig[i].joy_input : 0;
+    if (typeof set == "string") {
+      set = set in gamepadSetConfig ? gamepadSetConfig[set] : gamepadSetConfig["default"];
     }
+    gamepadsConfig[i].joy_listeners = [];
     for (var key in set) {
       if (set.hasOwnProperty(key)) {
         var action = set[key];
-        var id = action.joy || joy;
+        var id = 'joy' in action ? action.joy : joy;
+        gamepadsConfig[i].joy_listeners[id] = true;
         gameController.on(`joy:${id}:${action.type}:${action.value}`, triggerAction.bind(null, i, key, action));
       }
     }
+
+    gameController.on(`joy:${i}:update:0`, function(index, gp) {
+      if (!gamepadsConfig[index].gamepad_set == null) return;
+      if (gamepadsConfig[index].joy_listeners[index]) {
+        //update if listening on the gamepad
+        gamepads[index].sendState( function(index, payload, senders) {
+          sendLog(`SEND: (${senders.toString()} ${index}) ${payload}`, false);
+        }.bind(null, index));
+      }
+    }.bind(null, i));
   }
 
   gameController.updateMapping(JoyMappingConfig);
@@ -286,15 +331,6 @@ const loadConfig = async () => {
 
   gameController.on(`GAMEPAD_DISCONNECTED`, (id) => {
 
-  });
-
-  gameController.on(`joy:update`, (gp) => {
-    // console.log(gp);
-    for (var i = 0; i < gamepads.length; i++) {
-      gamepads[i].sendState((payload, senders) => {
-        sendLog(`SEND: (${senders.toString()} ${i}) ${payload}`, false);
-      });
-    }
   });
 };
 loadConfig();
@@ -314,77 +350,3 @@ function triggerAction(index, key, action, value) {
     gamepads[index].setMode(1);
   }
 }
-/*
-    gameController.on('button', (btn) => {
-      console.log(btn);
-      for (var i = 0; i < gamepadsConfig.length; i++) {
-        var set = gamepadsConfig[i].gamepad_set;
-        let data = gamepads[i].getState();
-        let send = false;
-        for (var key in set) {
-          if (set.hasOwnProperty(key)) {
-            var action = set[key];
-            if (action.type == 'button' && action.value == btn.index && action.joy == btn.gpIndex) {
-              gamepads[i].setButton(key, btn.pressed);
-              send = true;
-            }
-            if (action.type == 'hat' && action.value == btn.index && action.joy == btn.gpIndex) {
-              gamepads[i].setHat(btn.pressed ? key : "RELEASE");
-              send = true;
-            }
-            if (action.type == 'axis' && action.value == btn.index && action.joy == btn.gpIndex) {
-              gamepads[i].setAxis(key, btn.pressed);
-              send = true;
-            }
-          }
-        }
-        //console.log(data);
-        if (send) {
-          gamepads[i].setState(data);
-          gamepads[i].sendState((payload, senders) => {
-            sendLog(`SEND: (${senders.toString()}) ${payload}`, false);
-          });
-        }
-      }
-    })
-
-    gameController.on('thumbsticks', (msg) => {
-      // console.log(msg);
-      for (var i = 0; i < gamepadsConfig.length; i++) {
-        var set = gamepadsConfig[i].gamepad_set;
-        let data = gamepads[i].getState();
-        let send = false;
-        for (var key in set) {
-          if (set.hasOwnProperty(key)) {
-            var action = set[key];
-            if (action.type == 'axis' && action.value == btn.index && action.joy == btn.gpIndex) {
-              //gamepads[i].setButton(key, btn.pressed);
-              send = true;
-            }
-          }
-        }
-        //console.log(data);
-        if (send) {
-          gamepads[i].setState(data);
-          gamepads[i].sendState((payload, senders) => {
-            sendLog(`SEND: (${senders.toString()}) ${payload}`, false);
-          });
-        }
-      }
-
-      var data = gamepadSerial.getState();
-      data.joyLeft.x = Utils.map(msg.axis[0], -1, 1, 0, 255);
-      data.joyLeft.y = Utils.map(msg.axis[1], -1, 1, 0, 255);
-      data.joyRight.x = Utils.map(msg.axis[2], -1, 1, 0, 255);
-      data.joyRight.y = Utils.map(msg.axis[3], -1, 1, 0, 255);
-      data.mode = 1;
-      //console.log(data);
-      gamepadSerial.setState(data);
-      gamepadSerial.sendState((payload, senders) => {
-        sendLog(`SEND: (${senders.toString()}) ${payload}`, false);
-      });
-    })
-    */
-
-//})();
-/**/

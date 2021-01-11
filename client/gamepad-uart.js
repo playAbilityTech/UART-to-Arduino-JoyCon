@@ -14,6 +14,7 @@ class GamepadHandler extends EventEmitter {
     this.tcpClient = {};
     this.autoSendState = true;
     this.triggerTimers = {};
+    this.lastPayload = "";
     this.lastState = "";
 
     this.gamepad = {
@@ -59,14 +60,17 @@ class GamepadHandler extends EventEmitter {
       }
       reconnect = false;
       console.log(`Serial port '${this.portPath}' is opened.`);
-      this.emit('open', err);
+      this.emit('open', this.portPath);
     });
 
-    this.serial.on('close', function(port) {
+    this.serial.on('close', function(port, err) {
+      console.log(port, err);
       console.log(`Serial port '${port}' closed.`);
-      this.emit('close', port);
+      this.emit('close', port, err);
       reconnect = false;
-      this.reconnect();
+      if (err) {
+        this.reconnect();
+      }
     }.bind(this, this.portPath));
 
     this.serial.on('error', (err) => {
@@ -122,7 +126,7 @@ class GamepadHandler extends EventEmitter {
     // TCP
     this.tcpClient = new net.Socket();
 
-    this.tcpClient.setKeepAlive(true);
+    this.tcpClient.setKeepAlive(true, 1000);
 
     this.tcpClient.connect(port, ip, () => {
       console.log('TCP Connected');
@@ -173,6 +177,15 @@ class GamepadHandler extends EventEmitter {
     }
   }
 
+
+  /**
+   * MIDI
+   */
+  initMIDI() {
+
+  }
+
+
   /**
    * Send data to Serial
    * @private
@@ -184,8 +197,8 @@ class GamepadHandler extends EventEmitter {
     var payload = this._pack(obj);
 
     // check if data didin't changed
-    if (payload.join(",") == this.lastState) return;
-    this.lastState = payload.join(",");
+    if (payload.join(",") == this.lastPayload) return;
+    this.lastPayload = payload.join(",");
 
     if (this.serial.isOpen) {
       this.serial.write(payload);
@@ -409,6 +422,9 @@ class GamepadHandler extends EventEmitter {
    * @event stateChange
    */
   _stateUpdated() {
+    let data = this._pack(this.gamepad);
+    if (data.join(",") == this.lastState) return;
+    this.lastState = data.join(",");
     this.emit('stateChange', this.gamepad);
   }
 

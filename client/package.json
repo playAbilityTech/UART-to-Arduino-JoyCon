@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "livereload . -w 1000 -d & nodemon index.js"
   },
   "nodemonConfig": {
     "ignore": [
@@ -27,6 +27,7 @@
   "homepage": "https://github.com/HackerLoop/UART-to-Arduino-JoyCon#readme",
   "devDependencies": {
     "dotenv": "^8.2.0",
+    "livereload": "^0.9.1",
     "nodemon": "^2.0.4"
   },
   "dependencies": {
