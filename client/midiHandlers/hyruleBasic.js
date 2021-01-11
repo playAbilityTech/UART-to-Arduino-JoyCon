@@ -12,7 +12,7 @@ const DemoMidiMapping = (gamepadSerial, inputName, msg, sendState = () => {}) =>
   console.log(inputName, msg);
   var send_state = true;
 
-  gamepadSerial.setMode(1); // Disable IMU and use Serial Joystick
+  //gamepadSerial.setMode(1); // Disable IMU and use Serial Joystick
 
   switch (msg.note) {
     //Bouton B (51) et Bouton A (42)

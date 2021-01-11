@@ -14,6 +14,25 @@
 <body>
   <div id="app">
 
+    <div class="players">
+      <a href="/0" class="button link"
+        v-bind:class="{ active: gamepadIndex == 0 }">
+        Player 0
+      </a>
+      <a href="/1" class="button link"
+        v-bind:class="{ active: gamepadIndex == 1 }">
+        Player 1
+      </a>
+      <a href="/2" class="button link"
+        v-bind:class="{ active: gamepadIndex == 2 }">
+        Player 2
+      </a>
+      <a href="/3" class="button link"
+        v-bind:class="{ active: gamepadIndex == 3 }">
+        Player 3
+      </a>
+    </div>
+
     <div class="controls">
 
       <div class="controls-left">
@@ -73,7 +92,15 @@
                     }" text="⇦">
                   </button-gamepad>
                 </td>
-                <td></td>
+                <td>
+                  <button-gamepad
+                    v-bind:class="{ active: gamepad.button[10] }"
+                    :callback="(state) => {
+                      gamepad.button[10] = state;
+                      updateGamepad();
+                    }" text="">
+                  </button-gamepad>
+                </td>
                 <td>
                   <button-gamepad
                     v-bind:class="{ active: gamepad.joyLeft.x > 128 }"
@@ -265,7 +292,15 @@
                     }" text="⇦">
                   </button-gamepad>
                 </td>
-                <td></td>
+                <td>
+                  <button-gamepad
+                    v-bind:class="{ active: gamepad.button[11] }"
+                    :callback="(state) => {
+                      gamepad.button[11] = state;
+                      updateGamepad();
+                    }" text="">
+                  </button-gamepad>
+                </td>
                 <td>
                   <button-gamepad
                     v-bind:class="{ active: gamepad.joyRight.x > 128 }"
@@ -356,6 +391,7 @@
       return {
         timer: 0,
         release : null,
+        state: 0
       }
     },
     props: {
@@ -411,7 +447,7 @@
     el: '#app',
     data: {
       portSelected: '',
-      serialChecked: true,
+      serialChecked: false,
       useJoystickChecked: false,
       options: [],
       messages: [],
@@ -433,7 +469,7 @@
       joyLeftX: 128,
       joyLeftY: 128,
       map: {},
-      tcpChecked: true,
+      tcpChecked: false,
       tcpHostIP: '',
       tcpHostPort: '',
     },
@@ -555,7 +591,7 @@
         var content = this.$refs.messagesContainer;
         content.scrollTop = content.scrollHeight;
       },
-      updateGamepad(index) {
+      updateGamepad() {
         socket.emit('UPDATE_GAMEPAD', this.gamepadIndex, this.gamepad);
       }
     }
@@ -631,6 +667,15 @@
     top: 3px;
     box-shadow: 0 0px #403e41;
   }
+
+  .players {
+    text-align: center;
+    margin: 10px 0 30px;
+  }
+    .players .button {
+      padding: 5px 15px;
+      text-decoration: none;
+    }
 
   .controls {
     padding: 10px;

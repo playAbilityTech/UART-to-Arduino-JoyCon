@@ -1,6 +1,6 @@
 {
   "joy_input_mapping": {
-    "JOY_INPUT_1": 0
+    "JOY_INPUT_0": 0
   },
   "gamepads": [
     {
@@ -124,17 +124,18 @@
           "value": 3,
           "reverse": false
         }
-      },
-      "joy_listeners": [
-        true
-      ]
+      }
     },
     {
       "serial_enabled": true,
       "serial_port": "/dev/tty.usbserial-14YRLLWA",
       "midi_input": 0,
       "midi_handler": "hyruleBasic",
-      "joy_listeners": []
+      "gamepad_set": "default",
+      "joy_input": 0
+    },
+    {
+      "joy_input": 2
     }
   ],
   "gamepad_set": {

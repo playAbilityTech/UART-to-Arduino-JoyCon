@@ -244,14 +244,14 @@ for (var i = 0; i < gamepadsConfig.length; i++) {
     sendLog('[TCP] ' + err, false);
   });
 
-  gamepads[i].openTCP = () => {
+  gamepads[i].openTCP = function(i) {
     if (!gamepadsConfig[i].tcp_ip || !gamepadsConfig[i].tcp_enabled) return;
     sendLog('[TCP] connecting…');
     gamepads[i].connectTCP({
       ip: gamepadsConfig[i].tcp_ip,
       port: gamepadsConfig[i].tcp_port
     });
-  }
+  }.bind(null, i);
   gamepads[i].openTCP();
 
 
@@ -295,31 +295,40 @@ const loadConfig = async () => {
   await gameController.init();
 
   for (var i = 0; i < gamepadsConfig.length; i++) {
-    var set = gamepadsConfig[i].gamepad_set;
+    var set = gamepadsConfig[i].gamepad_set || "default";
     var joy = 'joy_input' in gamepadsConfig[i] ? gamepadsConfig[i].joy_input : 0;
     if (typeof set == "string") {
       set = set in gamepadSetConfig ? gamepadSetConfig[set] : gamepadSetConfig["default"];
     }
-    gamepadsConfig[i].joy_listeners = [];
+    var joy_listeners = [];
     for (var key in set) {
       if (set.hasOwnProperty(key)) {
         var action = set[key];
         var id = 'joy' in action ? action.joy : joy;
-        gamepadsConfig[i].joy_listeners[id] = true;
+        joy_listeners[id] = true;
         gameController.on(`joy:${id}:${action.type}:${action.value}`, triggerAction.bind(null, i, key, action));
       }
     }
+    if (joy_listeners.length <= 0) {
+      joy_listeners[joy] = true;
+    }
 
-    gameController.on(`joy:${i}:update:0`, function(index, gp) {
-      if (!gamepadsConfig[index].gamepad_set == null) return;
-      if (gamepadsConfig[index].joy_listeners[index]) {
-        //update if listening on the gamepad
-        gamepads[index].sendState( function(index, payload, senders) {
-          sendLog(`SEND: (${senders.toString()} ${index}) ${payload}`, false);
-        }.bind(null, index));
+    for (let j = 0; j < joy_listeners.length; j++) {
+      if (joy_listeners[j]) {
+        gameController.on(`joy:${j}:update:0`, function(index, gp) {
+          //if (!gamepadsConfig[index].gamepad_set == null) return;
+          //if (gamepadsConfig[index].joy_listeners[index]) {
+            //update if listening on the gamepad
+            gamepads[index].sendState( function(index, payload, senders) {
+              sendLog(`SEND: (${senders.toString()} ${index}) ${payload}`, false);
+            }.bind(null, index));
+          //}
+        }.bind(null, i));
       }
-    }.bind(null, i));
+    }
   }
+
+  //saveConf();
 
   gameController.updateMapping(JoyMappingConfig);
 
@@ -347,6 +356,6 @@ function triggerAction(index, key, action, value) {
   }
   if (action.type == 'axis') {
     gamepads[index].setAxis(key, Utils.map(value, -1, 1, 0, 255));
-    gamepads[index].setMode(1);
+    //gamepads[index].setMode(1);
   }
 }
