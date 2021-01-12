@@ -161,7 +161,7 @@ var midi_received = [];
 
 // Get message from all midi input and all channels
 easymidi.getInputs().forEach((inputName) => {
-  console.log('MIDI', inputName);
+  console.log('MIDI input', inputName);
   const input = new easymidi.Input(inputName);
   input.on('message', (msg) => {
     sendLog(`MIDI In (${inputName}): Ch ${msg.channel+1}: Note ${msg.note} ${msg._type} velocity ${msg.velocity}`, false);
@@ -169,9 +169,10 @@ easymidi.getInputs().forEach((inputName) => {
       inputName: inputName,
       msg: msg
     });
-    // midiHandler(gamepadSerial, inputName, msg, () => {
-    //   midi_received = true;
-    // });
+    // if (msg._type == "noteon")
+    //   midiHandler(gamepads[1], inputName, msg, () => {
+    //     midi_received = true;
+    //   });
   });
 });
 
@@ -257,14 +258,25 @@ for (var i = 0; i < gamepadsConfig.length; i++) {
 
   /*** MIDI ***/
 
-  if (gamepadsConfig[i].midi_handler) {
+  if (gamepadsConfig[i].midi_handler != null) {
     let midiHandler = require(`./midiHandlers/${gamepadsConfig[i].midi_handler}`);
+    console.log(`Player ${i} is listening MIDI notes`);
+
     EventMIDI.on('note', function(index, data) {
-      midiHandler(gamepads[index], data.inputName, data.msg, () => {
+      if (data.msg._type == 'noteoff') return;
+      //console.log("note");
+      midiHandler(gamepads[index], data.inputName, data.msg, function(index) {
+        // gamepads[index].sendState(function(index, payload, senders) {
+        //   sendLog(`SEND: (${senders.toString()} ${index}) ${payload}`, true);
+        //   // io.sockets.emit("GAMEPAD", gamepads[index].getState());
+        // }.bind(null, index));
+        //console.log("midiHandler done");
         midi_received[index] = true;
-      });
+      }.bind(null, index));
+
     }.bind(null, i));
   }
+  /**/
 
 }
 
@@ -313,6 +325,12 @@ const loadConfig = async () => {
       joy_listeners[joy] = true;
     }
 
+    var listeners_string = joy_listeners.reduce((output, value, index) => {
+      if (value) output.push(index);
+      return output;
+    }, []).join(',');
+    console.log(`Player ${i} is listening joy ${listeners_string}`);
+
     for (let j = 0; j < joy_listeners.length; j++) {
       if (joy_listeners[j]) {
         gameController.on(`joy:${j}:update:0`, function(index, gp) {
@@ -327,8 +345,6 @@ const loadConfig = async () => {
       }
     }
   }
-
-  //saveConf();
 
   gameController.updateMapping(JoyMappingConfig);
 

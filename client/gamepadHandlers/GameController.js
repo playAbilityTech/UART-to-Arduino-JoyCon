@@ -46,7 +46,7 @@ class GameController {
         return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
       }
 
-      window.consoleLog("[info] To detect gamepad press buttons to wake it up.");
+      window.consoleLog("[INFO] To detect gamepad press buttons to wake it up.");
 
       let interval = {};
       window.addEventListener("gamepadconnected", (e) => {
@@ -65,6 +65,7 @@ class GameController {
           axes: gp.axes
         });
         var lastState = "";
+        var lastAxisState = "";
         var buttonsStatus = [];
         interval[e.gamepad.index] = setInterval(() => {
           gp = navigator.getGamepads()[e.gamepad.index];
@@ -94,8 +95,11 @@ class GameController {
               axis[i] = map(axis[i], -THUMBSTICK_NOISE_THRESHOLD, -0.95, -0, -1);
             }
             //window.sendEventToProcessHandle(`joy:${gp.index}:axis:${i}`, axis[i]);
-            window.sendEventToJoyHandle(gp.index, 'axis', i, axis[i]);
+            if (lastAxisState[i] != axis[i])
+              window.sendEventToJoyHandle(gp.index, 'axis', i, axis[i]);
           }
+
+          lastAxisState = axis
 
           for (let i = 0; i < gp.buttons.length; i++) {
             // status changed
