@@ -41,7 +41,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('UPDATE_GAMEPAD', function(index, data) {
-    console.log(index, data);
+    //console.log(index, data);
     gamepads[index].setState(data);
     gamepads[index].sendState((payload, senders) => {
       sendLog(`SEND: (${senders.toString()} ${index}) ${payload}`, false);
@@ -52,6 +52,15 @@ io.on('connection', (socket) => {
     gamepadsConfig[index].serial_port = port || '';
     saveConf();
     io.sockets.emit("UPDATE_PORT", index, gamepadsConfig[index].serial_port);
+  });
+
+  socket.on('CHANGE_JOY', function(index, joyIndex) {
+    console.log('CHANGE_JOY', index);
+    detachGamepadListeners(index);
+    gamepadsConfig[index].joy_input = !isNaN(parseInt(joyIndex)) ? parseInt(joyIndex) : "";
+    saveConf();
+    loadGamepadConfig(index);
+    io.sockets.emit("UPDATE_JOY", joyIndex, gamepadsConfig[index].joy_input);
   });
 
   socket.on('OPEN_SERIAL', function(index) {
@@ -90,7 +99,12 @@ io.on('connection', (socket) => {
     gamepads[index].closeTCP();
   });
 
+  socket.on('GET_PORT_LIST', function() {
+    getPortList();
+  });
+
   io.sockets.emit("MESSAGE", messages);
+  io.sockets.emit("JOY_LIST", joyList);
 
   for (var i = 0; i < gamepads.length; i++) {
     io.sockets.emit("GAMEPAD", i, gamepads[i].getState());
@@ -103,6 +117,7 @@ io.on('connection', (socket) => {
     io.sockets.emit("UPDATE_TCP_HOST", i, gamepadsConfig[i].tcp_ip, gamepadsConfig[i].tcp_port);
 
     io.sockets.emit("UPDATE_PORT", i, gamepadsConfig[i].serial_port);
+    io.sockets.emit("UPDATE_JOY", i, isNaN(gamepadsConfig[i].joy_input) ? "" : gamepadsConfig[i].joy_input);
   }
 });
 
@@ -301,49 +316,85 @@ getPortList(true);
 /*** HID ***/
 const Utils = require('./utils');
 const GameController = require('./gamepadHandlers/GameController');
+var joyList = {};
+var gameController;
+var ctrlListeners = [];
+
+function detachGamepadListeners(i) {
+  for (var j = 0; j < ctrlListeners[i].length; j++) {
+    gameController.off(ctrlListeners[i][j].eventName, ctrlListeners[i][j].listener);
+  }
+}
+
+function loadGamepadConfig(i) {
+  console.log("loadGamepadConfig", i);
+  var set = gamepadsConfig[i].gamepad_set || "default";
+  var joy = 'joy_input' in gamepadsConfig[i] ? gamepadsConfig[i].joy_input : '';
+  //console.log("joy", joy, gamepadsConfig[i]);
+  if (typeof set == "string") {
+    set = set in gamepadSetConfig ? gamepadSetConfig[set] : gamepadSetConfig["default"];
+  }
+  var joy_listeners = [];
+  ctrlListeners[i] = [];
+  for (var key in set) {
+    if (set.hasOwnProperty(key)) {
+      var action = set[key];
+      var id = 'joy' in action ? action.joy : joy;
+      if (id !== "") {
+        joy_listeners[id] = true;
+
+        var eventName = `joy:${id}:${action.type}:${action.value}`;
+        var listener = triggerAction.bind(null, i, key, action);
+        ctrlListeners[i].push({
+          eventName: eventName,
+          listener: listener
+        })
+        //console.log(eventName);
+        gameController.on(eventName, listener);
+      }
+    }
+  }
+  if (joy_listeners.length <= 0) {
+    joy_listeners[joy] = true;
+  }
+
+  var listeners_string = joy_listeners.reduce((output, value, index) => {
+    if (value) output.push(index);
+    return output;
+  }, []).join(',');
+  console.log(`Player ${i} is listening joy ${listeners_string}`);
+
+  for (let j = 0; j < joy_listeners.length; j++) {
+    if (joy_listeners[j]) {
+      var eventName = `joy:${j}:update:0`;
+      var listener = updateJoy.bind(null, i);
+      ctrlListeners[i].push({
+        eventName: eventName,
+        listener: listener
+      })
+      // console.log(eventName);
+      gameController.on(eventName, listener);
+    }
+  }
+}
+
+function updateJoy(index, gp) {
+  //console.log("updateJoy", index, gp.index);
+  //if (!gamepadsConfig[index].gamepad_set == null) return;
+  //if (gamepadsConfig[index].joy_listeners[index]) {
+    //update if listening on the gamepad
+    gamepads[index].sendState( function(index, payload, senders) {
+      sendLog(`SEND: (${senders.toString()} ${index}) ${payload}`, false);
+    }.bind(null, index));
+  //}
+}
 
 const loadConfig = async () => {
-  const gameController = new GameController();
+  gameController = new GameController();
   await gameController.init();
 
   for (var i = 0; i < gamepadsConfig.length; i++) {
-    var set = gamepadsConfig[i].gamepad_set || "default";
-    var joy = 'joy_input' in gamepadsConfig[i] ? gamepadsConfig[i].joy_input : 0;
-    if (typeof set == "string") {
-      set = set in gamepadSetConfig ? gamepadSetConfig[set] : gamepadSetConfig["default"];
-    }
-    var joy_listeners = [];
-    for (var key in set) {
-      if (set.hasOwnProperty(key)) {
-        var action = set[key];
-        var id = 'joy' in action ? action.joy : joy;
-        joy_listeners[id] = true;
-        gameController.on(`joy:${id}:${action.type}:${action.value}`, triggerAction.bind(null, i, key, action));
-      }
-    }
-    if (joy_listeners.length <= 0) {
-      joy_listeners[joy] = true;
-    }
-
-    var listeners_string = joy_listeners.reduce((output, value, index) => {
-      if (value) output.push(index);
-      return output;
-    }, []).join(',');
-    console.log(`Player ${i} is listening joy ${listeners_string}`);
-
-    for (let j = 0; j < joy_listeners.length; j++) {
-      if (joy_listeners[j]) {
-        gameController.on(`joy:${j}:update:0`, function(index, gp) {
-          //if (!gamepadsConfig[index].gamepad_set == null) return;
-          //if (gamepadsConfig[index].joy_listeners[index]) {
-            //update if listening on the gamepad
-            gamepads[index].sendState( function(index, payload, senders) {
-              sendLog(`SEND: (${senders.toString()} ${index}) ${payload}`, false);
-            }.bind(null, index));
-          //}
-        }.bind(null, i));
-      }
-    }
+    loadGamepadConfig(i);
   }
 
   gameController.updateMapping(JoyMappingConfig);
@@ -352,16 +403,20 @@ const loadConfig = async () => {
     console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
     gp.index, gp.id,
     gp.buttons.length, gp.axes.length);
+    joyList[gp.index] = gp;
+    io.sockets.emit("JOY_LIST", joyList);
   });
 
-  gameController.on(`GAMEPAD_DISCONNECTED`, (id) => {
-
+  gameController.on(`GAMEPAD_DISCONNECTED`, (gp) => {
+    console.log("Gamepad disconnected at index %d: %s.", gp.index, gp.id);
+    delete joyList[gp.index];
+    io.sockets.emit("JOY_LIST", joyList);
   });
 };
 loadConfig();
 
 function triggerAction(index, key, action, value) {
-  // console.log(key, action, value);
+  //console.log(key, action, value);
   if (action.type == 'button') {
     if (key.startsWith('D_PAD_')) {
       gamepads[index].setHat(value ? key : "RELEASE");

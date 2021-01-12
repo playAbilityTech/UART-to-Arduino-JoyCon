@@ -12,8 +12,14 @@ class GameController {
   on(event, cb) {
     this.eventEmitter.on(event, cb);
   }
+  off(event, cb) {
+    this.eventEmitter.off(event, cb);
+  }
+  offAll(event) {
+    this.eventEmitter.removeAllListeners(event);
+  }
   updateMapping(obj) {
-    this.gp_input_mapping = obj;
+    //this.gp_input_mapping = obj;
   }
   async init() {
     const browser = await puppeteer.launch();
@@ -132,9 +138,10 @@ class GameController {
       });
       window.addEventListener("gamepaddisconnected", (e) => {
         window.sendEventToProcessHandle('GAMEPAD_DISCONNECTED', {
-          index: gp.index
+          index: e.gamepad.index,
+          id: e.gamepad.id
         });
-        window.consoleLog("Gamepad disconnected at index " + gp.index);
+        //window.consoleLog("Gamepad disconnected at index " + e.gamepad.index);
         clearInterval(interval[e.gamepad.index]);
       });
     }, [ buttons, this.SIGNAL_POLL_INTERVAL_MS, this.THUMBSTICK_NOISE_THRESHOLD ]);

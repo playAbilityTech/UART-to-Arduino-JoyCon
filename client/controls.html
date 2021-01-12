@@ -374,6 +374,16 @@
       </select>
 
       <br><br>
+
+      <label for="joyInput">Joystick input</label>
+      <select id="joyInput" v-model="joySelected" @change="changeJoyInput($event)">
+        <option value="">(Not Connected)</option>
+        <option v-for="option in joyList" v-bind:value="option.index">
+          ({{ option.index }}) {{ option.id }}
+        </option>
+      </select>
+
+      <br><br>
     </div>
     <ul class="messages" ref="messagesContainer">
       <li class="msg" v-for="(msg, index) in messages" :key="index">
@@ -451,6 +461,8 @@
       useJoystickChecked: false,
       options: [],
       messages: [],
+      joyList: {},
+      joySelected: "",
       gamepadIndex: 0,
       gamepad: {
         button: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -487,6 +499,9 @@
       socket.on('MESSAGE', (data) => {
         this.messages = data;
       });
+      socket.on('JOY_LIST', (obj) => {
+        this.joyList = obj;
+      });
       socket.on('PORT_LIST', (obj) => {
         this.options = obj;
         var exsist = this.options.filter((v) => {
@@ -495,6 +510,10 @@
         if (!exsist.length) {
           this.portSelected = '';
         }
+      });
+      socket.on('UPDATE_JOY', (index, joyIndex) => {
+        if (index != this.gamepadIndex) return;
+        this.joySelected = joyIndex;
       });
       socket.on('UPDATE_PORT', (index, port) => {
         if (index != this.gamepadIndex) return;
@@ -539,6 +558,9 @@
     },
 
     methods: {
+      changeJoyInput(e) {
+        socket.emit('CHANGE_JOY', this.gamepadIndex, this.joySelected);
+      },
       reloadPortList() {
         socket.emit('GET_PORT_LIST');
       },

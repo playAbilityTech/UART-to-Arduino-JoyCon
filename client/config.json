@@ -12,115 +12,115 @@
       "gamepad_set": {
         "B": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 0
         },
         "A": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 1
         },
         "Y": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 2
         },
         "X": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 3
         },
         "SHOULDER_LEFT": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 4
         },
         "SHOULDER_RIGHT": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 5
         },
         "TRIGGER_LEFT": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 6
         },
         "TRIGGER_RIGHT": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 7
         },
         "BACK": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 8
         },
         "START": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 9
         },
         "STICK_L_CLICK": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 10
         },
         "STICK_R_CLICK": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 11
         },
         "D_PAD_UP": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 12
         },
         "D_PAD_DOWN": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 13
         },
         "D_PAD_LEFT": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 14
         },
         "D_PAD_RIGHT": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 15
         },
         "HOME": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 16
         },
         "CAPTURE": {
           "type": "button",
-          "joy": 0,
+          "joy": 4,
           "value": 17
         },
         "LEFT_STICK_X": {
           "type": "axis",
-          "joy": 0,
+          "joy": 4,
           "value": 0,
           "reverse": false
         },
         "LEFT_STICK_Y": {
           "type": "axis",
-          "joy": 0,
+          "joy": 4,
           "value": 1,
           "reverse": false
         },
         "RIGHT_STICK_X": {
           "type": "axis",
-          "joy": 0,
+          "joy": 4,
           "value": 2,
           "reverse": false
         },
         "RIGHT_STICK_Y": {
           "type": "axis",
-          "joy": 0,
+          "joy": 4,
           "value": 3,
           "reverse": false
         }
@@ -132,11 +132,9 @@
       "midi_input": 0,
       "midi_handler": "hyruleBasic",
       "gamepad_set": "default",
-      "joy_input": 0
+      "joy_input": 1
     },
-    {
-      "joy_input": 2
-    }
+    {}
   ],
   "gamepad_set": {
     "default": {
