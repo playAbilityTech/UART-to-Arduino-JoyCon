@@ -7,8 +7,8 @@
       "tcp_enabled": false,
       "tcp_ip": "192.168.137.116",
       "tcp_port": "2323",
-      "serial_enabled": true,
-      "serial_port": "/dev/tty.SLAB_USBtoUART",
+      "serial_enabled": false,
+      "serial_port": "",
       "gamepad_set": {
         "B": {
           "type": "button",
@@ -124,7 +124,8 @@
           "value": 3,
           "reverse": false
         }
-      }
+      },
+      "joy_input": ""
     },
     {
       "serial_enabled": true,
@@ -132,9 +133,13 @@
       "midi_input": 0,
       "midi_handler": "hyruleBasic",
       "gamepad_set": "default",
-      "joy_input": 1
+      "joy_input": 0
     },
-    {}
+    {
+      "serial_port": "/dev/tty.SLAB_USBtoUART",
+      "joy_input": "",
+      "serial_enabled": true
+    }
   ],
   "gamepad_set": {
     "default": {

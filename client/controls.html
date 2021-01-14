@@ -15,6 +15,10 @@
   <div id="app">
 
     <div class="players">
+      <a href="/" class="button link"
+        v-bind:class="{ active: gamepadIndex == '' }">
+        🏠
+      </a>
       <a href="/0" class="button link"
         v-bind:class="{ active: gamepadIndex == 0 }">
         Player 0
@@ -150,7 +154,7 @@
                     :callback="(state) => {
                       gamepad.hat = state ? 6 : 255;
                       updateGamepad();
-                    }" text="◀">
+                    }" text="◄">
                   </button-gamepad>
                 </td>
                 <td></td>
@@ -695,19 +699,25 @@
     margin: 10px 0 30px;
   }
     .players .button {
-      padding: 5px 15px;
+      display: inline-block;
+      padding: 7px 15px;
       text-decoration: none;
+      height: 32px;
+      vertical-align: middle;
+      line-height: 1em;
     }
 
   .controls {
     padding: 10px;
-    display: flex;
+    /* display: flex; */
   }
 
   .controls-left {
+    float: left;
     width: 50%;
   }
   .controls-right {
+    float: right;
     width: 50%;
     text-align: right;
   }

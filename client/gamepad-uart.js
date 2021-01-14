@@ -2,6 +2,7 @@ const { EventEmitter } = require('events');
 const SerialPort = require("serialport");
 const jspack = require("jspack").jspack;
 const net = require('net');
+const Utils = require('./utils');
 
 const { BUTTONS, HAT, JOYSTICK, STICKS } = require('./mapping');
 
@@ -28,7 +29,7 @@ class GamepadHandler extends EventEmitter {
         y: 128,
       },
       hat: 255,
-      mode: 0,
+      mode: 2,
     };
   }
 
@@ -194,7 +195,9 @@ class GamepadHandler extends EventEmitter {
    */
   _sendSerial(obj, next = (p, senders) => {}) {
     var senders = [];
-    var payload = this._pack(obj);
+    var clone = {...obj};
+    clone.mode = (clone.mode[0] || clone.mode) - 1;
+    var payload = this._pack(clone);
 
     // check if data didin't changed
     if (payload.join(",") == this.lastPayload) return;
@@ -416,16 +419,28 @@ class GamepadHandler extends EventEmitter {
     this._sendSerial(this.gamepad, next);
   }
 
+  _handleMode() {
+    var clone = JSON.parse(JSON.stringify(this.gamepad));
+    if (clone.mode[1] == 2) {
+      clone.joyLeft.x = 255-clone.joyLeft.x;
+    }
+    if (clone.mode[1] == 3) {
+      clone.button[2] = 0;
+    }
+    return clone;
+  }
+
   /**
    * Send stateChange event
    * @private
    * @event stateChange
    */
   _stateUpdated() {
-    let data = this._pack(this.gamepad);
+    var obj = this._handleMode();
+    let data = this._pack(obj);
     if (data.join(",") == this.lastState) return;
     this.lastState = data.join(",");
-    this.emit('stateChange', this.gamepad);
+    this.emit('stateChange', obj);
   }
 
   /**

@@ -14,64 +14,40 @@
 <body>
   <div id="app">
 
+    <div class="players">
+      <a href="/" class="button link"
+        v-bind:class="{ active: true }">
+        🏠
+      </a>
+      <a href="/0" class="button link">
+        Player 0
+      </a>
+      <a href="/1" class="button link">
+        Player 1
+      </a>
+      <a href="/2" class="button link">
+        Player 2
+      </a>
+      <a href="/3" class="button link">
+        Player 3
+      </a>
+    </div>
+
     <div class="outputs">
       <div class="gamepad" v-for="(gamepad, index) in gamepads" :key="index">
-        {{index}}
-        <p>{{gamepad}}</p>
-        <controls
-          v-bind:index="index"
-          v-bind:gamepad="gamepad"
-          :callback="(index) => {
-            updateGamepad(index);
-          }">
-        </controls>
+        <p>PLAYER {{index}} - {{gamepad}}</p>
+        <input type="checkbox" :id="'checkbox-joy'+index" v-model="useJoystickChecked[index]" @change="checkUseReverse(index)">
+        <label :for="'checkbox-joy'+index">Disable IMU Joystick</label>
+
+        <input type="checkbox" :id="'checkbox-reverse-'+index" v-model="useReverseChecked[index]" @change="checkUseReverse(index)">
+        <label :for="'checkbox-reverse-'+index">Reverse Left Joystick</label>
+        <hr>
+        <br>
       </div>
     </div>
 
-    <div class="top">
-      <br>
+    <br><br>
 
-      <input type="checkbox" id="checkbox-joy" v-model="useJoystickChecked" @change="checkUseJoy($event)">
-      <label for="checkbox-joy">Disable IMU Joystick</label>
-
-      <br><br>
-
-      <input type="checkbox" id="checkboxTCP" v-model="tcpChecked" @change="checkTCP($event)">
-      <label for="checkboxTCP">TCP</label>
-
-      <br><br>
-
-      <form
-        id="tcpForm"
-        @submit="changeTcpHost"
-        action="https://vuejs.org/"
-        method="post"
-      >
-        <label for="">Host IP Address</label>
-        <input type="text" v-model="tcpHostIP" size="20" required>
-        :
-        <input type="text" v-model="tcpHostPort" size="10" required>
-
-        <button type="submit">Apply</button>
-      </form>
-
-      <br><br>
-
-      <input type="checkbox" id="checkbox" v-model="serialChecked" @change="checkSerial($event)">
-      <label for="checkbox">Serial</label>
-
-      <br><br>
-
-      <label for="serialPort">Serial port</label>
-      <select id="serialPort" v-model="portSelected" @click="reloadPortList" @change="changeSerialPort($event)">
-        <option value="">(Not Connected)</option>
-        <option v-for="option in options" v-bind:value="option.path">
-          {{ option.manufacturer || "Port de communication" }} ({{ option.path }})
-        </option>
-      </select>
-
-      <br><br>
-    </div>
     <ul class="messages" ref="messagesContainer">
       <li class="msg" v-for="(msg, index) in messages" :key="index">
         {{msg}}
@@ -83,384 +59,13 @@
 
 <script>
   var socket = io();
-  Vue.component('button-gamepad', {
-    data: function () {
-      return {
-        timer: 0,
-        release : null,
-      }
-    },
-    props: {
-      'text': String,
-      'callback': { type: Function },
-    },
-    template: `
-      <button
-        class="button needsclick" type="button"
-        @mousedown="buttonClick(1)"
-        @mouseup="buttonClick(0)"
-        @touchstart="buttonTouch(1)"
-        @touchend="buttonTouch(0)">
-        {{text}}
-      </button>
-    `,
-    methods: {
-      buttonClick(state) {
-        if (!isTouchDevice) {
-          this.buttonState(state);
-        }
-      },
-      buttonTouch(state) {
-        if (isTouchDevice) {
-          this.buttonState(state);
-        }
-      },
-      buttonState(state) {
-        if (state == 1) {
-          clearTimeout(this.release);
-          this.callback(state);
-          this.timer = Date.now();
-          //console.log('buttonState', state);
-        }
-        else {
-          var diff = Date.now() - this.timer;
-          //console.log(diff);
-          if (diff > 200) {
-            this.callback(state);
-            //console.log('buttonState', state);
-          }
-          else {
-            this.release = setTimeout(() => {
-              this.callback(state);
-              //console.log('buttonState', state);
-            }, 200 - diff);
-          }
-        }
-      }
-    }
-  });
-  Vue.component('controls', {
-    data: function () {
-      return {
-        data: {}
-      }
-    },
-    props: {
-      'index': Number,
-      'gamepad': Object,
-      'callback': Function
-    },
-    template: `
-      <div class="controls">
-
-        <div class="controls-left">
-          <div class="row">
-            <button-gamepad
-              v-bind:class="{ active: gamepad.button[6] }"
-              :callback="(state) => {
-                gamepad.button[6] = state;
-                updateGamepad(index);
-              }" text="ZL">
-            </button-gamepad>
-            <button-gamepad
-              v-bind:class="{ active: gamepad.button[4] }"
-              :callback="(state) => {
-                gamepad.button[4] = state;
-                updateGamepad(index);
-              }" text="L">
-            </button-gamepad>
-            <button-gamepad
-              v-bind:class="{ active: gamepad.button[8] }"
-              :callback="(state) => {
-                gamepad.button[8] = state;
-                updateGamepad(index);
-              }" text="-">
-            </button-gamepad>
-            <button-gamepad
-              v-bind:class="{ active: gamepad.button[13] }"
-              :callback="(state) => {
-                gamepad.button[13] = state;
-                updateGamepad(index);
-              }" text="C">
-            </button-gamepad>
-          </div>
-          <div class="row">
-            <div class="hat">
-              <table>
-                <tr>
-                  <td></td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.joyLeft.y < 60 }"
-                      :callback="(state) => {
-                        gamepad.joyLeft.y = state ? 0 : 128;
-                        updateGamepad(index);
-                      }" text="⇧">
-                    </button-gamepad>
-                  </td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.joyLeft.x < 60 }"
-                      :callback="(state) => {
-                        gamepad.joyLeft.x = state ? 0 : 128;
-                        updateGamepad(index);
-                      }" text="⇦">
-                    </button-gamepad>
-                  </td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.button[10] }"
-                      :callback="(state) => {
-                        gamepad.button[10] = state;
-                        updateGamepad(index);
-                      }" text="">
-                    </button-gamepad>
-                  </td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.joyLeft.x > 190 }"
-                      :callback="(state) => {
-                        gamepad.joyLeft.x = state ? 255 : 128;
-                        updateGamepad(index);
-                      }" text="⇨">
-                    </button-gamepad>
-                  </td>
-                </tr>
-                <tr>
-                  <td></td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.joyLeft.y > 190 }"
-                      :callback="(state) => {
-                        gamepad.joyLeft.y = state ? 255 : 128;
-                        updateGamepad(index);
-                        }" text="⇩">
-                    </button-gamepad>
-                  </td>
-                  <td></td>
-                </tr>
-              </table>
-            </div>
-          </div>
-          <div class="row">
-            <div class="hat">
-              <table>
-                <tr>
-                  <td></td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.hat == 0 }"
-                      :callback="(state) => {
-                        gamepad.hat = state ? 0 : 255;
-                        updateGamepad(index);
-                      }" text="▲">
-                    </button-gamepad>
-                  </td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.hat == 6 }"
-                      :callback="(state) => {
-                        gamepad.hat = state ? 6 : 255;
-                        updateGamepad(index);
-                      }" text="◀">
-                    </button-gamepad>
-                  </td>
-                  <td></td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.hat == 2 }"
-                      :callback="(state) => {
-                        gamepad.hat = state ? 2 : 255;
-                        updateGamepad(index);
-                      }" text="►">
-                    </button-gamepad>
-                  </td>
-                </tr>
-                <tr>
-                  <td></td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.hat == 4 }"
-                      :callback="(state) => {
-                        gamepad.hat = state ? 4 : 255;
-                        updateGamepad(index);
-                        }" text="▼">
-                    </button-gamepad>
-                  </td>
-                  <td></td>
-                </tr>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="controls-right">
-          <div class="row">
-            <button-gamepad
-              v-bind:class="{ active: gamepad.button[12] }"
-              :callback="(state) => {
-                gamepad.button[12] = state;
-                updateGamepad(index);
-              }" text="H">
-            </button-gamepad>
-            <button-gamepad
-              v-bind:class="{ active: gamepad.button[9] }"
-              :callback="(state) => {
-                gamepad.button[9] = state;
-                updateGamepad(index);
-              }" text="+">
-            </button-gamepad>
-            <button-gamepad
-              v-bind:class="{ active: gamepad.button[5] }"
-              :callback="(state) => {
-                gamepad.button[5] = state;
-                updateGamepad(index);
-              }" text="R">
-            </button-gamepad>
-            <button-gamepad
-              v-bind:class="{ active: gamepad.button[7] }"
-              :callback="(state) => {
-                gamepad.button[7] = state;
-                updateGamepad(index);
-              }" text="ZR">
-            </button-gamepad>
-          </div>
-          <div class="row">
-            <div class="hat">
-              <table>
-                <tr>
-                  <td></td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.button[3] }"
-                      :callback="(state) => {
-                        gamepad.button[3] = state;
-                        updateGamepad(index);
-                      }" text="X">
-                    </button-gamepad>
-                  </td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.button[0] }"
-                      :callback="(state) => {
-                        gamepad.button[0] = state;
-                        updateGamepad(index);
-                      }" text="Y">
-                    </button-gamepad>
-                  </td>
-                  <td></td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.button[2] }"
-                      :callback="(state) => {
-                        gamepad.button[2] = state;
-                        updateGamepad(index);
-                      }" text="A">
-                    </button-gamepad>
-                  </td>
-                </tr>
-                <tr>
-                  <td></td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.button[1] }"
-                      :callback="(state) => {
-                        gamepad.button[1] = state;
-                        updateGamepad(index);
-                      }" text="B">
-                    </button-gamepad>
-                  </td>
-                  <td></td>
-                </tr>
-              </table>
-            </div>
-          </div>
-          <div class="row">
-            <div class="hat">
-              <table>
-                <tr>
-                  <td></td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.joyRight.y < 60 }"
-                      :callback="(state) => {
-                        gamepad.joyRight.y = state ? 0 : 128;
-                        updateGamepad(index);
-                      }" text="⇧">
-                    </button-gamepad>
-                  </td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.joyRight.x < 60 }"
-                      :callback="(state) => {
-                        gamepad.joyRight.x = state ? 0 : 128;
-                        updateGamepad(index);
-                      }" text="⇦">
-                    </button-gamepad>
-                  </td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.button[11] }"
-                      :callback="(state) => {
-                        gamepad.button[11] = state;
-                        updateGamepad(index);
-                      }" text="">
-                    </button-gamepad>
-                  </td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.joyRight.x > 190 }"
-                      :callback="(state) => {
-                        gamepad.joyRight.x = state ? 255 : 128;
-                        updateGamepad(index);
-                      }" text="⇨">
-                    </button-gamepad>
-                  </td>
-                </tr>
-                <tr>
-                  <td></td>
-                  <td>
-                    <button-gamepad
-                      v-bind:class="{ active: gamepad.joyRight.y > 190 }"
-                      :callback="(state) => {
-                        gamepad.joyRight.y = state ? 255 : 128;
-                        updateGamepad(index);
-                        }" text="⇩">
-                    </button-gamepad>
-                  </td>
-                  <td></td>
-                </tr>
-              </table>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    `,
-    methods: {
-      updateGamepad(index) {
-        this.callback(index);
-      }
-    }
-  });
   var app = new Vue({
     el: '#app',
     data: {
       portSelected: '',
       serialChecked: true,
-      useJoystickChecked: false,
+      useJoystickChecked: [],
+      useReverseChecked: [],
       options: [],
       messages: [],
       gamepads: [],
@@ -512,11 +117,16 @@
         document.title = `Player ${id}`;
       });
       socket.on('GAMEPAD', (index, data) => {
-        console.log("GAMEPAD", index, data);
+        //console.log("GAMEPAD", index, data);
         this.gamepads[index] = data;
-        // if (this.gamepad.mode == 1) {
-        //   this.useJoystickChecked = true;
-        // }
+        var mode1 = this.gamepads[index].mode[0] || this.gamepads[index].mode;
+        var mode2 = this.gamepads[index].mode[1];
+        if (mode1 == 2) {
+          this.useJoystickChecked[index] = true;
+        }
+        if (mode2 == 2) {
+          this.useReverseChecked[index] = true;
+        }
       });
       socket.on('MAPPING', (data) => {
         this.map = data;
@@ -582,14 +192,19 @@
         }
         e.preventDefault();
       },
-      checkUseJoy(e) {
-        if (this.useJoystickChecked) {
-          this.gamepad.mode = 1;
+      checkUseJoy(index) {
+        if (this.useJoystickChecked[index]) {
+          this.gamepads[index].mode = 1;
         }
         else {
-          this.gamepad.mode = 0;
+          this.gamepads[index].mode = 0;
         }
-        this.updateGamepad();
+        this.updateGamepad(index);
+      },
+      checkUseReverse(index) {
+        this.gamepads[index].mode = (this.useJoystickChecked[index] ? 2 : 1) + "" + (this.useReverseChecked[index] ? 2 : 1);
+        console.log(this.gamepads[index].mode);
+        this.updateGamepad(index);
       },
       scrollToEnd() {
         var content = this.$refs.messagesContainer;
@@ -672,6 +287,19 @@
     top: 3px;
     box-shadow: 0 0px #403e41;
   }
+
+  .players {
+    text-align: center;
+    margin: 10px 0 30px;
+  }
+    .players .button {
+      display: inline-block;
+      padding: 7px 15px;
+      text-decoration: none;
+      height: 32px;
+      vertical-align: middle;
+      line-height: 1em;
+    }
 
   .controls {
     padding: 10px;

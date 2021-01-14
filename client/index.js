@@ -236,8 +236,8 @@ for (var i = 0; i < gamepadsConfig.length; i++) {
 
   gamepads[i].openSerial = function(i) {
     if (!gamepadsConfig[i].serial_port || !gamepadsConfig[i].serial_enabled) return;
-    messages = [];
-    io.sockets.emit("MESSAGE", messages);
+    // messages = [];
+    // io.sockets.emit("MESSAGE", messages);
     gamepads[i].connect({
       portPath: gamepadsConfig[i].serial_port,
       initAutoSendState: false
@@ -416,17 +416,29 @@ const loadConfig = async () => {
 loadConfig();
 
 function triggerAction(index, key, action, value) {
-  //console.log(key, action, value);
+  console.log(key, action, value);
   if (action.type == 'button') {
     if (key.startsWith('D_PAD_')) {
       gamepads[index].setHat(value ? key : "RELEASE");
     }
     else {
-      gamepads[index].setButton(key, value);
+      // if (gamepads[index].getState().mode[1] == 3 && key == "A") {
+      //
+      // }
+      // else {
+        gamepads[index].setButton(key, value);
+      //}
+      //gamepads[index].setButton(key, value);
     }
   }
   if (action.type == 'axis') {
-    gamepads[index].setAxis(key, Utils.map(value, -1, 1, 0, 255));
+    // if (gamepads[index].getState().mode[1] == 2) {
+    //   gamepads[index].setAxis(key, Utils.map(value, -1, 1, 255, 0));
+    // }
+    // else {
+      gamepads[index].setAxis(key, Utils.map(value, -1, 1, 0, 255));
+    //}
+    //gamepads[index].setAxis(key, Utils.map(value, -1, 1, 0, 255));
     //gamepads[index].setMode(1);
   }
 }
