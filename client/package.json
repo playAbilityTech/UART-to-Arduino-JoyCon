@@ -1,5 +1,5 @@
 {
-  "name": "UART-to-Arduino-JoyCon-client",
+  "name": "uart-to-arduino-joycon-client",
   "version": "1.0.0",
   "description": "client",
   "main": "index.js",

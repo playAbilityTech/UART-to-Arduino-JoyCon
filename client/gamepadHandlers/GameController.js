@@ -123,7 +123,7 @@ class GameController {
             window.sendEventToJoyHandle(gp.index, 'update', 0, {
               index: gp.index,
               id: gp.id,
-              axes: axis,
+              axis: axis,
               buttons: gp.buttons.map(a => a.pressed)
             });
             // window.sendEventToProcessHandle(`joy:update`, {

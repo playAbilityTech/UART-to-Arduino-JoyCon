@@ -77,7 +77,7 @@
                 <td></td>
                 <td>
                   <button-gamepad
-                    v-bind:class="{ active: gamepad.joyLeft.y < 128 }"
+                    v-bind:class="{ active: gamepad.joyLeft.y < 127 }"
                     :callback="(state) => {
                       gamepad.joyLeft.y = state ? 0 : 128;
                       updateGamepad();
@@ -89,7 +89,7 @@
               <tr>
                 <td>
                   <button-gamepad
-                    v-bind:class="{ active: gamepad.joyLeft.x < 128 }"
+                    v-bind:class="{ active: gamepad.joyLeft.x < 127 }"
                     :callback="(state) => {
                       gamepad.joyLeft.x = state ? 0 : 128;
                       updateGamepad();
@@ -337,11 +337,26 @@
 
     <div class="top">
       <br>
+      <hr>
 
-      <input type="checkbox" id="checkbox-joy-reverse" v-model="useReverseChecked" @change="checkUseJoy($event)">
-      <label for="checkbox-joy-reverse">Reverse Left Joystick</label>
-
+      <input type="checkbox" id="checkbox-modifier-0" v-model="modifiers[0]" @change="setModifier('LEFT_STICK_X', 'reverse', modifiers[0])">
+      <label for="checkbox-modifier-0">Reverse Joystick Left X</label>
       <br><br>
+      <button-gamepad
+        class="small"
+        :callback="(state) => {
+          setModifier('A', 'disable', state);
+          }" text="Disable A (hold)">
+      </button-gamepad>
+      <button-gamepad
+        class="small"
+        :callback="(state) => {
+          setModifier('A', 'disable', state);
+          setModifier('B', 'hold', state);
+          }" text="Break (hold B)">
+      </button-gamepad>
+
+      <br><hr><br>
 
       <input type="checkbox" id="checkbox-joy" v-model="useJoystickChecked" @change="checkUseJoy($event)">
       <label for="checkbox-joy">Disable IMU Joystick</label>
@@ -420,20 +435,20 @@
     template: `
       <button
         class="button needsclick" type="button"
-        @mousedown="buttonClick(1)"
-        @mouseup="buttonClick(0)"
-        @touchstart="buttonTouch(1)"
-        @touchend="buttonTouch(0)">
+        @mousedown="buttonClick($event, 1)"
+        @mouseup="buttonClick($event, 0)"
+        @touchstart="buttonTouch($event, 1)"
+        @touchend="buttonTouch($event, 0)">
         {{text}}
       </button>
     `,
     methods: {
-      buttonClick(state) {
+      buttonClick(event, state) {
         if (!isTouchDevice) {
           this.buttonState(state);
         }
       },
-      buttonTouch(state) {
+      buttonTouch(event, state) {
         if (isTouchDevice) {
           this.buttonState(state);
         }
@@ -494,6 +509,7 @@
       tcpChecked: false,
       tcpHostIP: '',
       tcpHostPort: '',
+      modifiers: {},
     },
     created () {
       window.onbeforeunload = () => {
@@ -619,6 +635,13 @@
         this.gamepad.mode = (this.useJoystickChecked ? 2 : 1) + "" + (this.useReverseChecked ? 2 : 1);
         this.updateGamepad();
       },
+      setModifier(key, modifier, value) {
+        socket.emit('SET_MODIFIER', this.gamepadIndex, {
+          modifier: modifier,
+          value: value,
+          key: key
+        });
+      },
       scrollToEnd() {
         var content = this.$refs.messagesContainer;
         content.scrollTop = content.scrollHeight;
@@ -670,10 +693,6 @@
     line-height: .5em;
   }
 
-  .msg {
-
-  }
-
   .button {
     position: relative;
     min-width: 46px;
@@ -698,6 +717,15 @@
   .button.active {
     top: 3px;
     box-shadow: 0 0px #403e41;
+  }
+
+  .button.small {
+    display: inline-block;
+    padding: 7px 15px;
+    text-decoration: none;
+    height: 32px;
+    vertical-align: middle;
+    line-height: 1em;
   }
 
   .players {
@@ -741,6 +769,10 @@
     border-collapse: collapse;
     border-spacing: 0;
     text-align: center;
+  }
+
+  select {
+    max-width: 100%;
   }
 
 </style>

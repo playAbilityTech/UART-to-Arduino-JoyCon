@@ -54,6 +54,10 @@ io.on('connection', (socket) => {
     io.sockets.emit("UPDATE_PORT", index, gamepadsConfig[index].serial_port);
   });
 
+  socket.on('SET_MODIFIER', function(index, obj) {
+    setModifier(index, obj.modifier, obj.value, obj.key);
+  });
+
   socket.on('CHANGE_JOY', function(index, joyIndex) {
     console.log('CHANGE_JOY', index);
     detachGamepadListeners(index);
@@ -222,7 +226,7 @@ for (var i = 0; i < gamepadsConfig.length; i++) {
     sendLog(`[Serial] port '${path}' is opened.`, false);
   });
   gamepads[i].on('close', (port, err) => {
-    if (!err) {
+    if (!err || err.disconnected) {
       sendLog(`[Serial] port ${port} closed.`, false);
     }
   });
@@ -334,12 +338,17 @@ function loadGamepadConfig(i) {
   if (typeof set == "string") {
     set = set in gamepadSetConfig ? gamepadSetConfig[set] : gamepadSetConfig["default"];
   }
+  gamepads[i].saveGamepadSet(set);
   var joy_listeners = [];
   ctrlListeners[i] = [];
   for (var key in set) {
     if (set.hasOwnProperty(key)) {
       var action = set[key];
       var id = 'joy' in action ? action.joy : joy;
+      var reverse = 'reverse' in action ? action.reverse : false;
+      var disable = 'disable' in action ? action.disable : false;
+      gamepads[i].setModifier("reverse", action.type, key, action.value, reverse);
+      gamepads[i].setModifier("disable", action.type, key, action.value, disable);
       if (id !== "") {
         joy_listeners[id] = true;
 
@@ -378,14 +387,14 @@ function loadGamepadConfig(i) {
   }
 }
 
-function updateJoy(index, gp) {
+function updateJoy(index, gp, force) {
   //console.log("updateJoy", index, gp.index);
   //if (!gamepadsConfig[index].gamepad_set == null) return;
   //if (gamepadsConfig[index].joy_listeners[index]) {
     //update if listening on the gamepad
     gamepads[index].sendState( function(index, payload, senders) {
       sendLog(`SEND: (${senders.toString()} ${index}) ${payload}`, false);
-    }.bind(null, index));
+    }.bind(null, index), force);
   //}
 }
 
@@ -397,7 +406,7 @@ const loadConfig = async () => {
     loadGamepadConfig(i);
   }
 
-  gameController.updateMapping(JoyMappingConfig);
+  //gameController.updateMapping(JoyMappingConfig);
 
   gameController.on(`GAMEPAD_CONNECTED`, (gp) => {
     console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
@@ -441,4 +450,10 @@ function triggerAction(index, key, action, value) {
     //gamepads[index].setAxis(key, Utils.map(value, -1, 1, 0, 255));
     //gamepads[index].setMode(1);
   }
+}
+
+function setModifier(index, modifier, value, key) {
+  let set = gamepads[index].getGamepadSet();
+  gamepads[index].setModifier(modifier, set[key].type, key, set[key].value, value);
+  updateJoy(index, null, true);
 }

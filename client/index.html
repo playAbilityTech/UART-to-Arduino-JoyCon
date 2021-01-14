@@ -35,12 +35,30 @@
 
     <div class="outputs">
       <div class="gamepad" v-for="(gamepad, index) in gamepads" :key="index">
+        <small>{{joyList[joySelected[index]] && joyList[joySelected[index]].id}}</small><br>
         <p>PLAYER {{index}} - {{gamepad}}</p>
-        <input type="checkbox" :id="'checkbox-joy'+index" v-model="useJoystickChecked[index]" @change="checkUseReverse(index)">
+        
+        <input type="checkbox" :id="'checkbox-joy'+index" v-model="useJoystickChecked[index]" @change="checkUseJoy(index)">
         <label :for="'checkbox-joy'+index">Disable IMU Joystick</label>
 
-        <input type="checkbox" :id="'checkbox-reverse-'+index" v-model="useReverseChecked[index]" @change="checkUseReverse(index)">
-        <label :for="'checkbox-reverse-'+index">Reverse Left Joystick</label>
+        <input type="checkbox" :id="'checkbox-modifier'+index" v-model="modifiers[index]" @change="setModifier(index, 'LEFT_STICK_X', 'reverse', modifiers[index])">
+        <label for="'checkbox-modifier'+index">Reverse Joystick Left X</label>
+
+        <button-gamepad
+          class="small"
+          :callback="(state) => {
+            setModifier(index, 'A', 'disable', state);
+            }" text="Disable A (hold)">
+        </button-gamepad>
+
+        <button-gamepad
+          class="small"
+          :callback="(state) => {
+            setModifier(index, 'A', 'disable', state);
+            setModifier(index, 'B', 'hold', state);
+            }" text="Break (hold B)">
+        </button-gamepad>
+        
         <hr>
         <br>
       </div>
@@ -59,6 +77,63 @@
 
 <script>
   var socket = io();
+  Vue.component('button-gamepad', {
+    data: function () {
+      return {
+        timer: 0,
+        release : null,
+        state: 0
+      }
+    },
+    props: {
+      'text': String,
+      'callback': { type: Function },
+    },
+    template: `
+      <button
+        class="button needsclick" type="button"
+        @mousedown="buttonClick($event, 1)"
+        @mouseup="buttonClick($event, 0)"
+        @touchstart="buttonTouch($event, 1)"
+        @touchend="buttonTouch($event, 0)">
+        {{text}}
+      </button>
+    `,
+    methods: {
+      buttonClick(event, state) {
+        if (!isTouchDevice) {
+          this.buttonState(state);
+        }
+      },
+      buttonTouch(event, state) {
+        if (isTouchDevice) {
+          this.buttonState(state);
+        }
+      },
+      buttonState(state) {
+        if (state == 1) {
+          clearTimeout(this.release);
+          this.callback(state);
+          this.timer = Date.now();
+          //console.log('buttonState', state);
+        }
+        else {
+          var diff = Date.now() - this.timer;
+          //console.log(diff);
+          if (diff > 200) {
+            this.callback(state);
+            //console.log('buttonState', state);
+          }
+          else {
+            this.release = setTimeout(() => {
+              this.callback(state);
+              //console.log('buttonState', state);
+            }, 200 - diff);
+          }
+        }
+      }
+    }
+  });
   var app = new Vue({
     el: '#app',
     data: {
@@ -89,6 +164,9 @@
       tcpChecked: true,
       tcpHostIP: '',
       tcpHostPort: '',
+      modifiers: [],
+      joySelected: [],
+      joyList: {},
     },
     created () {
       window.onbeforeunload = () => {
@@ -113,8 +191,11 @@
       socket.on('UPDATE_PORT', (port) => {
         this.portSelected = port;
       });
-      socket.on('PLAYER_ID', (id) => {
-        document.title = `Player ${id}`;
+      socket.on('JOY_LIST', (obj) => {
+        this.joyList = obj;
+      });
+      socket.on('UPDATE_JOY', (index, joyIndex) => {
+        this.joySelected[index] = joyIndex;
       });
       socket.on('GAMEPAD', (index, data) => {
         //console.log("GAMEPAD", index, data);
@@ -194,17 +275,19 @@
       },
       checkUseJoy(index) {
         if (this.useJoystickChecked[index]) {
-          this.gamepads[index].mode = 1;
+          this.gamepads[index].mode = 2;
         }
         else {
-          this.gamepads[index].mode = 0;
+          this.gamepads[index].mode = 1;
         }
         this.updateGamepad(index);
       },
-      checkUseReverse(index) {
-        this.gamepads[index].mode = (this.useJoystickChecked[index] ? 2 : 1) + "" + (this.useReverseChecked[index] ? 2 : 1);
-        console.log(this.gamepads[index].mode);
-        this.updateGamepad(index);
+      setModifier(index, key, modifier, value) {
+        socket.emit('SET_MODIFIER', index, {
+          modifier: modifier,
+          value: value,
+          key: key
+        });
       },
       scrollToEnd() {
         var content = this.$refs.messagesContainer;
@@ -258,10 +341,6 @@
     line-height: .5em;
   }
 
-  .msg {
-
-  }
-
   .button {
     position: relative;
     min-width: 46px;
@@ -286,6 +365,15 @@
   .button.active {
     top: 3px;
     box-shadow: 0 0px #403e41;
+  }
+
+  .button.small {
+    display: inline-block;
+    padding: 7px 15px;
+    text-decoration: none;
+    height: 32px;
+    vertical-align: middle;
+    line-height: 1em;
   }
 
   .players {

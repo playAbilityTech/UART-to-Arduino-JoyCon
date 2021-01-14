@@ -17,6 +17,8 @@ class GamepadHandler extends EventEmitter {
     this.triggerTimers = {};
     this.lastPayload = "";
     this.lastState = "";
+    this.mappingValue = {...BUTTONS, ...STICKS};
+    this.gamepad_set = {};
 
     this.gamepad = {
       button: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -31,6 +33,11 @@ class GamepadHandler extends EventEmitter {
       hat: 255,
       mode: 2,
     };
+
+    this.modifiers = {
+      button: {},
+      axis: {}
+    }
   }
 
   /**
@@ -180,27 +187,20 @@ class GamepadHandler extends EventEmitter {
 
 
   /**
-   * MIDI
-   */
-  initMIDI() {
-
-  }
-
-
-  /**
    * Send data to Serial
    * @private
    * @param {Object} obj Gamepad object
    * @callback [next]
+   * @param {bool} force Send state anyway
    */
-  _sendSerial(obj, next = (p, senders) => {}) {
+  _sendSerial(obj, next = (p, senders) => {}, force = false) {
     var senders = [];
     var clone = {...obj};
     clone.mode = (clone.mode[0] || clone.mode) - 1;
     var payload = this._pack(clone);
 
     // check if data didin't changed
-    if (payload.join(",") == this.lastPayload) return;
+    if (!force && payload.join(",") == this.lastPayload) return;
     this.lastPayload = payload.join(",");
 
     if (this.serial.isOpen) {
@@ -415,17 +415,66 @@ class GamepadHandler extends EventEmitter {
    * Set State
    * @callback [next] callback
    */
-  sendState(next = (p) => {}) {
-    this._sendSerial(this.gamepad, next);
+  sendState(next = (p) => {}, force) {
+    // apply modifier before send
+    var obj = this._handleModifiers();
+    this._sendSerial(obj, next, force);
   }
 
-  _handleMode() {
+  /**
+   * Set Current Gamepad set
+   * @param {Object} set Gamepad set
+   */
+  saveGamepadSet(set) {
+    this.gamepad_set = set;
+  }
+
+  /**
+   * Get Current Gamepad set
+   * @return {Object} Gamepad set
+   */
+  getGamepadSet() {
+    return this.gamepad_set;
+  }
+
+  /**
+   * Set Modifier to gamepad state
+   * @param {String} modifier
+   * @param {String} type Input type button or axis
+   * @param {String} key Input key ex:"SHOULDER_LEFT"
+   * @param {int} id Input id
+   * @param {int} value modifier value
+   */
+  setModifier(modifier, type, key, id, value) {
+    if (!this.modifiers[type][id]) this.modifiers[type][id] = {};
+    this.modifiers[type][id][modifier] = value;
+    this.modifiers[type][id].key = key;
+    this._stateUpdated();
+  }
+  
+  /**
+   * Apply modifier to gamepad state
+   * @private
+   * @return {Object}
+   */
+  _handleModifiers() {
     var clone = JSON.parse(JSON.stringify(this.gamepad));
-    if (clone.mode[1] == 2) {
-      clone.joyLeft.x = 255-clone.joyLeft.x;
-    }
-    if (clone.mode[1] == 3) {
-      clone.button[2] = 0;
+    for (const type in this.modifiers) {
+      var modifier = this.modifiers[type];
+      for (const id in modifier) {
+        var element = modifier[id];
+        var map = this._getMappingValue(element.key)
+        //console.log(map, type, element);
+        if (element.disable) {
+          clone[type][map] = 0;
+        }
+        if (element.hold) {
+          clone[type][map] = 1;
+        }
+        if (element.reverse) {
+          clone[map[0]][map[1]] = 255 - clone[map[0]][map[1]];
+        }
+      }
     }
     return clone;
   }
@@ -436,7 +485,10 @@ class GamepadHandler extends EventEmitter {
    * @event stateChange
    */
   _stateUpdated() {
-    var obj = this._handleMode();
+    //this._handleModifiers();
+    // clone state to preserve it and apply modifiers
+    var obj = this._handleModifiers();
+    // var obj = this.gamepad;
     let data = this._pack(obj);
     if (data.join(",") == this.lastState) return;
     this.lastState = data.join(",");
@@ -447,6 +499,7 @@ class GamepadHandler extends EventEmitter {
    * Get value from the JOYSTICK object
    * @private
    * @param {String} value
+   * @return {Object}
    */
   _getJoystickMappingValue(value) {
     var axis = {x: 128, y: 128};
@@ -460,6 +513,7 @@ class GamepadHandler extends EventEmitter {
    * Get value from the JOYSTICK KEY
    * @private
    * @param {String} value
+   * @return {Object}
    */
   _getAxisMappingValue(value) {
     var key, id;
@@ -475,6 +529,7 @@ class GamepadHandler extends EventEmitter {
    * Get value from the HAT object
    * @private
    * @param {String} value
+   * @return {id}
    */
   _getHatMappingValue(value) {
     var id = value;
@@ -488,6 +543,7 @@ class GamepadHandler extends EventEmitter {
    * Get value from the MAPPING object
    * @private
    * @param {String} value
+   * @return {int}
    */
   _getButtonMappingValue(value) {
     var id = value;
@@ -506,9 +562,24 @@ class GamepadHandler extends EventEmitter {
   }
 
   /**
+   * Get value from key
+   * @private
+   * @param {String} value
+   * @return {id}
+   */
+  _getMappingValue(value) {
+    var id = value;
+    if (id.toUpperCase() in this.mappingValue) {
+      id = this.mappingValue[id.toUpperCase()];
+    }
+    return id;
+  }
+
+  /**
    * Constrain value in 0 to 255 range
    * @private
    * @param {String} value
+   * @return {int}
    */
   _safe_Uint8_t(value) {
     return Math.min(Math.max(parseInt(value), 0), 255) || 0;

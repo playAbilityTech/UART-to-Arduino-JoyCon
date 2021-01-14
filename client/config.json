@@ -136,8 +136,9 @@
       "joy_input": 0
     },
     {
-      "serial_port": "/dev/tty.SLAB_USBtoUART",
-      "joy_input": "",
+      "serial_port": "COM20",
+      "joy_input": 1,
+      "gamepad_set": "default",
       "serial_enabled": true
     }
   ],
