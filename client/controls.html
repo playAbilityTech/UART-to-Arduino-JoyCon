@@ -338,6 +338,11 @@
     <div class="top">
       <br>
 
+      <input type="checkbox" id="checkbox-joy-reverse" v-model="useReverseChecked" @change="checkUseJoy($event)">
+      <label for="checkbox-joy-reverse">Reverse Left Joystick</label>
+
+      <br><br>
+
       <input type="checkbox" id="checkbox-joy" v-model="useJoystickChecked" @change="checkUseJoy($event)">
       <label for="checkbox-joy">Disable IMU Joystick</label>
 
@@ -463,6 +468,7 @@
       portSelected: '',
       serialChecked: false,
       useJoystickChecked: false,
+      useReverseChecked: false,
       options: [],
       messages: [],
       joyList: {},
@@ -530,8 +536,13 @@
         if (index != this.gamepadIndex) return;
         console.log("GAMEPAD", index, data);
         this.gamepad = data;
-        if (this.gamepad.mode == 1) {
+        var mode1 = this.gamepad.mode[0] || this.gamepad.mode;
+        var mode2 = this.gamepad.mode[1];
+        if (mode1 == 2) {
           this.useJoystickChecked = true;
+        }
+        if (mode2 == 2) {
+          this.useReverseChecked = true;
         }
       });
       socket.on('MAPPING', (index, data) => {
@@ -605,12 +616,7 @@
         e.preventDefault();
       },
       checkUseJoy(e) {
-        if (this.useJoystickChecked) {
-          this.gamepad.mode = 1;
-        }
-        else {
-          this.gamepad.mode = 0;
-        }
+        this.gamepad.mode = (this.useJoystickChecked ? 2 : 1) + "" + (this.useReverseChecked ? 2 : 1);
         this.updateGamepad();
       },
       scrollToEnd() {
