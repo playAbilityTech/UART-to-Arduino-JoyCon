@@ -330,13 +330,19 @@ function detachGamepadListeners(i) {
   }
 }
 
+const os = require('os');
+
 function loadGamepadConfig(i) {
   console.log("loadGamepadConfig", i);
   var set = gamepadsConfig[i].gamepad_set || "default";
   var joy = 'joy_input' in gamepadsConfig[i] ? gamepadsConfig[i].joy_input : '';
   //console.log("joy", joy, gamepadsConfig[i]);
   if (typeof set == "string") {
-    set = set in gamepadSetConfig ? gamepadSetConfig[set] : gamepadSetConfig["default"];
+    var set_name = set in gamepadSetConfig ? set : "default";
+    var os_set = set+"_"+os.platform();
+    set_name = os_set in gamepadSetConfig ? os_set : set_name;
+    console.log("loding set", i, set_name);
+    set = gamepadSetConfig[set_name];
   }
   gamepads[i].saveGamepadSet(set);
   var joy_listeners = [];
@@ -431,24 +437,17 @@ function triggerAction(index, key, action, value) {
       gamepads[index].setHat(value ? key : "RELEASE");
     }
     else {
-      // if (gamepads[index].getState().mode[1] == 3 && key == "A") {
-      //
-      // }
-      // else {
-        gamepads[index].setButton(key, value);
-      //}
-      //gamepads[index].setButton(key, value);
+      gamepads[index].setButton(key, value);
     }
   }
   if (action.type == 'axis') {
-    // if (gamepads[index].getState().mode[1] == 2) {
-    //   gamepads[index].setAxis(key, Utils.map(value, -1, 1, 255, 0));
-    // }
-    // else {
+    if (action.action == 'button') {
+      var v = Math.min(Math.max(parseInt(value), 0), 1) || 0;
+      gamepads[index].setButton(key, v);
+    }
+    else {
       gamepads[index].setAxis(key, Utils.map(value, -1, 1, 0, 255));
-    //}
-    //gamepads[index].setAxis(key, Utils.map(value, -1, 1, 0, 255));
-    //gamepads[index].setMode(1);
+    }
   }
 }
 

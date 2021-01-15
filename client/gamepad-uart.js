@@ -446,12 +446,13 @@ class GamepadHandler extends EventEmitter {
    * @param {int} value modifier value
    */
   setModifier(modifier, type, key, id, value) {
+    //console.log(modifier, type, key, id, value);
     if (!this.modifiers[type][id]) this.modifiers[type][id] = {};
     this.modifiers[type][id][modifier] = value;
     this.modifiers[type][id].key = key;
     this._stateUpdated();
   }
-  
+
   /**
    * Apply modifier to gamepad state
    * @private
