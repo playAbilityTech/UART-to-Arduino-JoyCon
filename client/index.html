@@ -37,12 +37,20 @@
       <div class="gamepad" v-for="(gamepad, index) in gamepads" :key="index">
         <small>{{joyList[joySelected[index]] && joyList[joySelected[index]].id}}</small><br>
         <p>PLAYER {{index}} - {{gamepad}}</p>
-        
+
         <input type="checkbox" :id="'checkbox-joy'+index" v-model="useJoystickChecked[index]" @change="checkUseJoy(index)">
         <label :for="'checkbox-joy'+index">Disable IMU Joystick</label>
 
         <input type="checkbox" :id="'checkbox-modifier'+index" v-model="modifiers[index]" @change="setModifier(index, 'LEFT_STICK_X', 'reverse', modifiers[index])">
         <label for="'checkbox-modifier'+index">Reverse Joystick Left X</label>
+
+        <button-gamepad
+          class="small"
+          :callback="(state) => {
+            gamepads[index].mode = (state ? 2 : 1);
+            updateGamepad(index);
+          }" text="Disable Left Joystick">
+        </button-gamepad>
 
         <button-gamepad
           class="small"
@@ -58,7 +66,7 @@
             setModifier(index, 'B', 'hold', state);
             }" text="Break (hold B)">
         </button-gamepad>
-        
+
         <hr>
         <br>
       </div>
@@ -202,12 +210,8 @@
         this.gamepads[index] = data;
         var mode1 = this.gamepads[index].mode[0] || this.gamepads[index].mode;
         var mode2 = this.gamepads[index].mode[1];
-        if (mode1 == 2) {
-          this.useJoystickChecked[index] = true;
-        }
-        if (mode2 == 2) {
-          this.useReverseChecked[index] = true;
-        }
+        this.useJoystickChecked[index] = (mode1 == 2);
+        this.useReverseChecked[index] = (mode2 == 2);
       });
       socket.on('MAPPING', (data) => {
         this.map = data;

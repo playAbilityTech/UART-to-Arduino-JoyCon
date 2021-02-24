@@ -124,16 +124,16 @@
       "joy_input": ""
     },
     {
-      "serial_enabled": true,
-      "serial_port": "/dev/tty.SLAB_USBtoUART",
+      "serial_enabled": false,
+      "serial_port": "",
       "midi_input": 0,
       "midi_handler": "hyruleBasic",
       "gamepad_set": "hori_wheel_mk_switch",
-      "joy_input": 0
+      "joy_input": ""
     },
     {
-      "serial_port": "COM20",
-      "joy_input": 1,
+      "serial_port": "/dev/tty.SLAB_USBtoUART",
+      "joy_input": "",
       "gamepad_set": "default",
       "serial_enabled": true
     }

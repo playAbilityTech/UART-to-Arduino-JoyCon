@@ -345,6 +345,13 @@
       <button-gamepad
         class="small"
         :callback="(state) => {
+          gamepad.mode = (state ? 2 : 1);
+          updateGamepad();
+        }" text="Disable Left Joystick">
+      </button-gamepad>
+      <button-gamepad
+        class="small"
+        :callback="(state) => {
           setModifier('A', 'disable', state);
           }" text="Disable A (hold)">
       </button-gamepad>
@@ -515,6 +522,61 @@
       window.onbeforeunload = () => {
         socket.emit('leave', this.username);
       }
+      window.addEventListener('keydown', (event) => {
+        event.preventDefault();
+        console.log(event.keyCode);
+        if (event.keyCode == 38) { // UP
+          this.gamepad.joyLeft.y = 0;
+          this.updateGamepad();
+        }
+        else if (event.keyCode == 39) { // RIGHT
+          this.gamepad.joyLeft.x = 255;
+          this.updateGamepad();
+        }
+        else if (event.keyCode == 40) { // DOWN
+          this.gamepad.joyLeft.y = 255;
+          this.updateGamepad();
+        }
+        else if (event.keyCode == 37) { // LEFT
+          this.gamepad.joyLeft.x = 0;
+          this.updateGamepad();
+        }
+        else if (event.keyCode == 13) { // ENTER
+          this.gamepad.button[2] = 1;
+          this.updateGamepad();
+        }
+        else if (event.keyCode == 8) { // BACK
+          this.gamepad.button[1] = 1;
+          this.updateGamepad();
+        }
+      });
+      window.addEventListener("keyup", (event) => {
+        event.preventDefault();
+        if (event.keyCode == 38) { // UP
+          this.gamepad.joyLeft.y = 128;
+          this.updateGamepad();
+        }
+        else if (event.keyCode == 39) { // RIGHT
+          this.gamepad.joyLeft.x = 128;
+          this.updateGamepad();
+        }
+        else if (event.keyCode == 40) { // DOWN
+          this.gamepad.joyLeft.y = 128;
+          this.updateGamepad();
+        }
+        else if (event.keyCode == 37) { // LEFT
+          this.gamepad.joyLeft.x = 128;
+          this.updateGamepad();
+        }
+        else if (event.keyCode == 13) { // ENTER
+          this.gamepad.button[2] = 0;
+          this.updateGamepad();
+        }
+        else if (event.keyCode == 8) { // BACK
+          this.gamepad.button[1] = 0;
+          this.updateGamepad();
+        }
+      });
     },
     mounted() {
       const path = window.location.pathname;
@@ -554,12 +616,8 @@
         this.gamepad = data;
         var mode1 = this.gamepad.mode[0] || this.gamepad.mode;
         var mode2 = this.gamepad.mode[1];
-        if (mode1 == 2) {
-          this.useJoystickChecked = true;
-        }
-        if (mode2 == 2) {
-          this.useReverseChecked = true;
-        }
+        this.useJoystickChecked = (mode1 == 2);
+        this.useReverseChecked = (mode2 == 2);
       });
       socket.on('MAPPING', (index, data) => {
         if (index != this.gamepadIndex) return;
