@@ -12,7 +12,6 @@
 
 SwitchJoystick_ Joystick;
 
-//#define USE_MIDI
 #define USE_SERIAL
 
 // MPU6050
@@ -78,8 +77,8 @@ void getIMUData() {
     leftJoyX = (ypr[2]-rollOffset) * ADC_Max/M_PI*SCALING;
     leftJoyY = (ypr[1]-pitchOffset) * ADC_Max/M_PI*SCALING;
 
-    leftJoyX = map(leftJoyX, -512, 511, 0, 255);
-    leftJoyY = map(leftJoyY, -512, 511, 0, 255);
+    leftJoyX = map(leftJoyX, -512, 511, 255, 0);
+    leftJoyY = map(leftJoyY, -512, 511, 255, 0);
 
     leftJoyX = constrain(leftJoyX, 0, 255);
     leftJoyY = constrain(leftJoyY, 0, 255);
@@ -126,42 +125,6 @@ uint8_t check_rx_buffer() {
 #endif
 
 
-// SERIAL MIDI
-//----------------------------------
-#ifdef USE_MIDI
-
-typedef struct {
-  int8_t channel;
-  int8_t type;
-  int8_t note;
-  int8_t velocity;
-} midi_t;
-
-midi_t midi;
-#define FRAME_SIZE_MIDI (3)
-
-uint8_t midi_buffer[FRAME_SIZE_MIDI];
-uint8_t midi_buffer_index = 0;
-
-void push_midi_buffer(uint8_t d) {
-  midi_buffer[midi_buffer_index] = d;
-  midi_buffer_index = (midi_buffer_index+1) % FRAME_SIZE_MIDI;
-}
-
-uint8_t get_midi_buffer(uint8_t i) {
-  return (midi_buffer[(i + midi_buffer_index) % FRAME_SIZE_MIDI]);
-}
-
-uint8_t check_midi_buffer() {
-  if (get_midi_buffer(0) & 0b10000000) {
-    return 1;
-  }
-  return 0;
-}
-
-#endif
-
-
 // SERIAL
 //----------------------------------
 
@@ -170,38 +133,6 @@ void getSerialData() {
     byte c = Serial1.read();
     //Serial.print(c);
     //Serial.print(",");
-
-    #ifdef USE_MIDI
-      push_midi_buffer(c);
-      if (check_midi_buffer()) {
-        Serial.print(" MIDI:");
-        for (int i = 0; i <= FRAME_SIZE_MIDI; i++) {
-          Serial.print((byte) get_midi_buffer(i));
-          Serial.print(",");
-        }
-        Serial.print("END \t ");
-
-        if ((get_midi_buffer(0) & 0xF0) == 0x80) {
-          midi.type = 0;
-        }
-        else if ((get_midi_buffer(0) & 0xF0) == 0x90){
-          midi.type = 1;
-        }
-
-        midi.channel = get_midi_buffer(0) & 0x0F;
-        midi.note = get_midi_buffer(1);
-        midi.velocity = get_midi_buffer(2);
-
-        Serial.print("[MIDI in] channel:");
-        Serial.print(midi.channel + 1);
-        Serial.print(" note:");
-        Serial.print(midi.note);
-        Serial.print(" type:");
-        Serial.print(midi.type);
-        Serial.print(" velocity:");
-        Serial.println(midi.velocity);
-      }
-    #endif
 
     #ifdef USE_SERIAL
       push_rx_buffer(c);
@@ -239,7 +170,7 @@ void setup(){
   pinMode(A0, INPUT_PULLUP);
   pinMode(A1, INPUT_PULLUP);
   pinMode(A2, INPUT_PULLUP);
-  pinMode(A3, INPUT_PULLUP);
+  pinMode(A3, INPUT_PULLUP); // onboard button
 
   //pinMode(0, INPUT_PULLUP); TX0
   //pinMode(1, INPUT_PULLUP); RX1
@@ -288,7 +219,7 @@ void loop() {
   getIMUData();
 
   // reset offset
-  if (digitalRead(A0)) {
+  if (digitalRead(A3)) {
     onTime = millis();
   }
   else {
@@ -305,24 +236,24 @@ void loop() {
   if (millis() > timer) {
     timer = millis() + 10; // 10 ms = 1/0.010 == 100Hz
 
-    #ifdef USE_MIDI
-      switch (midi.note) {
-        case 36:
-          Joystick.setButton(1, midi.type);
-          break;
-        case 62:
-          Joystick.setButton(4, midi.type);
-          break;
-      }
-    #endif
-
     #ifdef USE_SERIAL
       for (uint8_t i=0; i<sizeof(gamepad.button); i++) {
         Joystick.setButton(i, gamepad.button[i]);
       }
       if (gamepad.mode == 1) {
+        // Disable IMU joystick for uart
         Joystick.setXAxis(gamepad.analog[0]);
         Joystick.setYAxis(gamepad.analog[1]);
+      }
+      else if (gamepad.mode == 2) {
+        // reverse X axis
+        Joystick.setXAxis(map(leftJoyX, 0, 255, 255, 0));
+        Joystick.setYAxis(leftJoyY);
+      }
+      else if (gamepad.mode == 3) {
+        // reverse X & Y axis
+        Joystick.setXAxis(map(leftJoyX, 0, 255, 255, 0));
+        Joystick.setYAxis(map(leftJoyY, 0, 255, 255, 0));
       }
       else {
         // USE IMU AXIS
@@ -335,19 +266,28 @@ void loop() {
       Joystick.setHatSwitch(gamepad.hat[0] == 255 ? -1 : gamepad.hat[0]*45);
     #endif
 
-    if (!digitalRead(14)) {
+    if (!digitalRead(10)) {
       Joystick.pressButton(1); // B
     }
-    if (!digitalRead(15)) {
+    if (!digitalRead(16)) {
       Joystick.pressButton(2); // A
     }
-    if (!digitalRead(16)) {
+    if (!digitalRead(14)) {
       Joystick.pressButton(4); // L
     }
-    if (!digitalRead(10)) {
+    if (!digitalRead(15)) {
       Joystick.pressButton(5); // R
     }
     if (!digitalRead(A0)) {
+
+    }
+    if (!digitalRead(A1)) {
+
+    }
+    if (!digitalRead(A2)) {
+
+    }
+    if (!digitalRead(A3)) {
       Joystick.pressButton(2); // A
     }
 
