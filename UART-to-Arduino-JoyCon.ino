@@ -273,21 +273,22 @@ void loop() {
       Joystick.pressButton(2); // A
     }
     if (!digitalRead(14)) {
-      Joystick.pressButton(4); // L
+      Joystick.pressButton(3); // X
     }
     if (!digitalRead(15)) {
-      Joystick.pressButton(5); // R
+      Joystick.pressButton(4); // L
     }
     if (!digitalRead(A0)) {
-
+      Joystick.pressButton(5); // R
     }
     if (!digitalRead(A1)) {
-
+      Joystick.pressButton(6); // ZL
     }
     if (!digitalRead(A2)) {
-
+      Joystick.pressButton(7); // ZR
     }
-    if (!digitalRead(A3)) {
+
+    if (!digitalRead(A3)) { // OnBoard Button
       Joystick.pressButton(2); // A
     }
 
