@@ -41,6 +41,9 @@
         <input type="checkbox" :id="'checkbox-joy'+index" v-model="useJoystickChecked[index]" @change="checkUseJoy(index)">
         <label :for="'checkbox-joy'+index">Disable IMU Joystick</label>
 
+        <input type="checkbox" :id="'checkbox-pad'+index" v-model="disablePadChecked[index]" @change="checkDisablePad(index)">
+        <label :for="'checkbox-pad'+index">Disable PADS</label>
+
         <input type="checkbox" :id="'checkbox-modifier'+index" v-model="modifiers[index]" @change="setModifier(index, 'LEFT_STICK_X', 'reverse', modifiers[index])">
         <label for="'checkbox-modifier'+index">Reverse Joystick Left X</label>
 
@@ -149,6 +152,7 @@
       serialChecked: true,
       useJoystickChecked: [],
       useReverseChecked: [],
+      disablePadChecked: [],
       options: [],
       messages: [],
       gamepads: [],
@@ -212,6 +216,8 @@
         var mode2 = this.gamepads[index].mode[1];
         this.useJoystickChecked[index] = (mode1 == 2);
         this.useReverseChecked[index] = (mode2 == 2);
+
+        this.disablePadChecked[index] = (mode1 == 5);
       });
       socket.on('MAPPING', (data) => {
         this.map = data;
@@ -280,6 +286,15 @@
       checkUseJoy(index) {
         if (this.useJoystickChecked[index]) {
           this.gamepads[index].mode = 2;
+        }
+        else {
+          this.gamepads[index].mode = 1;
+        }
+        this.updateGamepad(index);
+      },
+      checkDisablePad(index) {
+        if (this.disablePadChecked[index]) {
+          this.gamepads[index].mode = 5;
         }
         else {
           this.gamepads[index].mode = 1;

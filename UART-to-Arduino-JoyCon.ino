@@ -267,29 +267,37 @@ void loop() {
     #endif
 
     if (!digitalRead(10)) {
-      Joystick.pressButton(1); // B
+      Joystick.pressButton(7); // ZR
     }
     if (!digitalRead(16)) {
-      Joystick.pressButton(2); // A
+      Joystick.pressButton(6); // ZL
     }
     if (!digitalRead(14)) {
-      Joystick.pressButton(3); // X
+      Joystick.pressButton(5); // R
     }
     if (!digitalRead(15)) {
       Joystick.pressButton(4); // L
     }
     if (!digitalRead(A0)) {
-      Joystick.pressButton(5); // R
+      Joystick.pressButton(3); // X
     }
     if (!digitalRead(A1)) {
-      Joystick.pressButton(6); // ZL
+      Joystick.pressButton(0); // Y
     }
     if (!digitalRead(A2)) {
-      Joystick.pressButton(7); // ZR
+      Joystick.pressButton(1); // B
     }
 
     if (!digitalRead(A3)) { // OnBoard Button
       Joystick.pressButton(2); // A
+    }
+
+    if (gamepad.mode == 4) {
+      // disable pads
+      Joystick.setButton(0, 0); // Y
+      Joystick.setButton(1, 0); // B
+      Joystick.setButton(2, 0); // A
+      Joystick.setButton(3, 0); // X
     }
 
     Joystick.sendState();

@@ -365,10 +365,15 @@
 
       <br><hr><br>
 
+      <input type="checkbox" id="checkbox-pad" v-model="disablePadChecked" @change="checkDisablePad($event)">
+      <label for="checkbox-pad">Disable PADS</label>
+
+      <br><br>
+
       <input type="checkbox" id="checkbox-joy" v-model="useJoystickChecked" @change="checkUseJoy($event)">
       <label for="checkbox-joy">Disable IMU Joystick</label>
 
-      <br><br>
+      <br><br><hr><br>
 
       <input type="checkbox" id="checkboxTCP" v-model="tcpChecked" @change="checkTCP($event)">
       <label for="checkboxTCP">TCP</label>
@@ -491,6 +496,7 @@
       serialChecked: false,
       useJoystickChecked: false,
       useReverseChecked: false,
+      disablePadChecked: false,
       options: [],
       messages: [],
       joyList: {},
@@ -618,6 +624,7 @@
         var mode2 = this.gamepad.mode[1];
         this.useJoystickChecked = (mode1 == 2);
         this.useReverseChecked = (mode2 == 2);
+        this.disablePadChecked = (mode1 == 5);
       });
       socket.on('MAPPING', (index, data) => {
         if (index != this.gamepadIndex) return;
@@ -691,6 +698,10 @@
       },
       checkUseJoy(e) {
         this.gamepad.mode = (this.useJoystickChecked ? 2 : 1) + "" + (this.useReverseChecked ? 2 : 1);
+        this.updateGamepad();
+      },
+      checkDisablePad(e) {
+        this.gamepad.mode = this.disablePadChecked ? 5 : (this.useJoystickChecked ? 2 : 1) + "" + (this.useReverseChecked ? 2 : 1);
         this.updateGamepad();
       },
       setModifier(key, modifier, value) {
