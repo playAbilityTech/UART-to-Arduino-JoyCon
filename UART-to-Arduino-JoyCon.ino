@@ -21,7 +21,7 @@ MPU6050 mpu;
 
 const int ADC_Max = 1023;  // 10 bit
 
-#define SCALING 6        // max Joystick value  at 90deg/SCALING.
+#define SCALING 4        // max Joystick value  at 90deg/SCALING.
 
 #define INTERRUPT_PIN 7  // use pin 2 on Arduino Uno & most boards
 
@@ -267,25 +267,25 @@ void loop() {
     #endif
 
     if (!digitalRead(10)) {
-      Joystick.pressButton(7); // ZR
+      Joystick.pressButton(2); // A
     }
     if (!digitalRead(16)) {
-      Joystick.pressButton(6); // ZL
+      Joystick.pressButton(1); // B
     }
     if (!digitalRead(14)) {
-      Joystick.pressButton(5); // R
-    }
-    if (!digitalRead(15)) {
-      Joystick.pressButton(4); // L
-    }
-    if (!digitalRead(A0)) {
       Joystick.pressButton(3); // X
     }
-    if (!digitalRead(A1)) {
+    if (!digitalRead(15)) {
       Joystick.pressButton(0); // Y
     }
+    if (!digitalRead(A0)) {
+      Joystick.pressButton(4); // L
+    }
+    if (!digitalRead(A1)) {
+      Joystick.pressButton(5); // R
+    }
     if (!digitalRead(A2)) {
-      Joystick.pressButton(1); // B
+      Joystick.pressButton(10); // LEFT_STICK_CLICK
     }
 
     if (!digitalRead(A3)) { // OnBoard Button

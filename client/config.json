@@ -7,14 +7,14 @@
       "tcp_enabled": false,
       "tcp_ip": "192.168.137.116",
       "tcp_port": "2323",
-      "serial_enabled": false,
-      "serial_port": "",
+      "serial_enabled": true,
+      "serial_port": "/dev/tty.SLAB_USBtoUART",
       "gamepad_set": "default",
       "joy_input": ""
     },
     {
-      "serial_enabled": false,
-      "serial_port": "/dev/tty.SLAB_USBtoUART4",
+      "serial_enabled": true,
+      "serial_port": "/dev/tty.SLAB_USBtoUART3",
       "midi_input": 0,
       "midi_handler": "hyruleBasic",
       "gamepad_set": "hori_wheel_mk_switch",
@@ -22,15 +22,15 @@
     },
     {
       "serial_port": "/dev/tty.SLAB_USBtoUART6",
-      "joy_input": "",
+      "joy_input": 0,
       "gamepad_set": "default",
-      "serial_enabled": true
+      "serial_enabled": false
     },
     {
       "serial_port": "/dev/tty.SLAB_USBtoUART8",
       "joy_input": "",
       "gamepad_set": "default",
-      "serial_enabled": true
+      "serial_enabled": false
     }
   ],
   "gamepad_set": {
