@@ -35,6 +35,7 @@
 
     <div class="outputs">
       <div class="gamepad" v-for="(gamepad, index) in gamepads" :key="index">
+        <small>{{portSelected[index]}}</small> / 
         <small>{{joyList[joySelected[index]] && joyList[joySelected[index]].id}}</small><br>
         <p>PLAYER {{index}} - {{gamepad}}</p>
 
@@ -148,7 +149,7 @@
   var app = new Vue({
     el: '#app',
     data: {
-      portSelected: '',
+      portSelected: [],
       serialChecked: true,
       useJoystickChecked: [],
       useReverseChecked: [],
@@ -193,15 +194,18 @@
       });
       socket.on('PORT_LIST', (obj) => {
         this.options = obj;
-        var exsist = this.options.filter((v) => {
-          return Object.values(v).includes(this.portSelected);
-        });
-        if (!exsist.length) {
-          this.portSelected = '';
+        for (var i = 0; i < this.portSelected.length; i++) {
+          var exsist = this.options.filter((v) => {
+            return Object.values(v).includes(this.portSelected[i]);
+          });
+          if (!exsist.length) {
+            this.portSelected[i] = '';
+          }
         }
       });
-      socket.on('UPDATE_PORT', (port) => {
-        this.portSelected = port;
+      socket.on('UPDATE_PORT', (index, port) => {
+        console.log("UPDATE_PORT", index, port);
+        this.portSelected[index] = port;
       });
       socket.on('JOY_LIST', (obj) => {
         this.joyList = obj;
