@@ -443,10 +443,33 @@ function triggerAction(index, key, action, value) {
   if (action.type == 'axis') {
     if (action.action == 'button') {
       var v = Math.min(Math.max(parseInt(value), 0), 1) || 0;
+      var v = v == action.active ? 1 : 0;
       gamepads[index].setButton(key, v);
     }
+    else if (action.action == 'button_float') {
+      console.log(action);
+      //var v = Math.min(Math.max(parseInt(value), 0), 1) || 0;
+      var v = Math.round(parseFloat(value) * 10) / 10;
+      console.log(v);
+      if (v == action.release) {
+        if (key.startsWith('D_PAD_')) {
+          gamepads[index].setHat("RELEASE");
+        }
+        else {
+          gamepads[index].setButton(key, 0);
+        }
+      }
+      else if(v == action.active) {
+        if (key.startsWith('D_PAD_')) {
+          gamepads[index].setHat(key);
+        }
+        else {
+          gamepads[index].setButton(key, v);
+        }
+      }
+    }
     else {
-      gamepads[index].setAxis(key, Utils.map(value, -1, 1, 0, 255));
+      gamepads[index].setAxis(key, Utils.map(value, -0.4, 0.4, 0, 255));
     }
   }
 }

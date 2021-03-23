@@ -6,7 +6,7 @@ class GameController {
   constructor() {
     this.eventEmitter = new EventEmitter();
     this.SIGNAL_POLL_INTERVAL_MS = 10; // 10 = 100hz
-    this.THUMBSTICK_NOISE_THRESHOLD = 0.15;
+    this.THUMBSTICK_NOISE_THRESHOLD = 0.01;
     this.gp_input_mapping = null;
   }
   on(event, cb) {
@@ -29,6 +29,7 @@ class GameController {
       this.eventEmitter.emit(event, msg);
     });
     await page.exposeFunction('sendEventToJoyHandle', (id, type, index, value) => {
+      console.log(id, type, index, value);
       var output = id;
       if (this.gp_input_mapping != null) {
         var key = `JOY_INPUT_${id}`;

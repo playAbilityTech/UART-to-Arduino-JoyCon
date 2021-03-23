@@ -7,30 +7,30 @@
       "tcp_enabled": false,
       "tcp_ip": "192.168.137.116",
       "tcp_port": "2323",
-      "serial_enabled": true,
+      "serial_enabled": false,
       "serial_port": "/dev/tty.SLAB_USBtoUART",
       "gamepad_set": "default",
       "joy_input": ""
     },
     {
-      "serial_enabled": true,
+      "serial_enabled": false,
       "serial_port": "/dev/tty.SLAB_USBtoUART3",
       "midi_input": 0,
       "midi_handler": "hyruleBasic",
-      "gamepad_set": "hori_wheel_mk_switch",
+      "gamepad_set": "default",
       "joy_input": ""
     },
     {
-      "serial_port": "/dev/tty.SLAB_USBtoUART6",
+      "serial_port": "/dev/tty.SLAB_USBtoUART4",
       "joy_input": 0,
-      "gamepad_set": "default",
+      "gamepad_set": "logitech_wheel_ps4_2",
       "serial_enabled": false
     },
     {
-      "serial_port": "/dev/tty.SLAB_USBtoUART8",
-      "joy_input": "",
-      "gamepad_set": "default",
-      "serial_enabled": false
+      "serial_port": "/dev/tty.usbmodemHIDPE1",
+      "joy_input": 0,
+      "gamepad_set": "logitech_wheel_ps4",
+      "serial_enabled": true
     }
   ],
   "gamepad_set": {
@@ -210,6 +210,198 @@
       "RIGHT_STICK_Y": {
         "type": "axis",
         "value": 4
+      }
+    },
+    "logitech_wheel_ps4": {
+      "B": {
+        "type": "axis",
+        "action": "button",
+        "value": 1,
+        "active": 0,
+        "release": 1
+      },
+      "A": {
+        "type": "axis",
+        "action": "button",
+        "value": 2,
+        "active": 0,
+        "release": 1
+      },
+      "Y": {
+        "type": "button",
+        "value": 1
+      },
+      "X": {
+        "type": "button",
+        "value": 3
+      },
+      "SHOULDER_LEFT": {
+        "type": "button",
+        "value": 5
+      },
+      "SHOULDER_RIGHT": {
+        "type": "button",
+        "value": 4
+      },
+      "TRIGGER_LEFT": {
+        "type": "button",
+        "value": 7
+      },
+      "TRIGGER_RIGHT": {
+        "type": "button",
+        "value": 6
+      },
+      "BACK": {
+        "type": "button",
+        "value": 20
+      },
+      "START": {
+        "type": "button",
+        "value": 19
+      },
+      "STICK_L_CLICK": {
+        "type": "button",
+        "value": 11
+      },
+      "STICK_R_CLICK": {
+        "type": "button",
+        "value": 10
+      },
+      "D_PAD_UP": {
+        "type": "axis",
+        "action": "button_float",
+        "value": 9,
+        "active": -1.1,
+        "release": 1.4
+      },
+      "D_PAD_DOWN": {
+        "type": "axis",
+        "action": "button_float",
+        "value": 9,
+        "active": 0,
+        "release": 1.4
+      },
+      "D_PAD_LEFT": {
+        "type": "axis",
+        "action": "button_float",
+        "value": 9,
+        "active": 0.7,
+        "release": 1.4
+      },
+      "D_PAD_RIGHT": {
+        "type": "axis",
+        "action": "button_float",
+        "value": 9,
+        "active": -0.3,
+        "release": 1.4
+      },
+      "HOME": {
+        "type": "button",
+        "value": 24
+      },
+      "CAPTURE": {
+        "type": "button",
+        "value": 8
+      },
+      "LEFT_STICK_X": {
+        "type": "axis",
+        "value": 0
+      }
+    },
+    "logitech_wheel_ps4_2": {
+      "B": {
+        "type": "axis",
+        "action": "button",
+        "value": 1,
+        "active": 0,
+        "release": 1
+      },
+      "A": {
+        "type": "axis",
+        "action": "button",
+        "value": 2,
+        "active": 0,
+        "release": 1
+      },
+      "Y": {
+        "type": "button",
+        "value": 1
+      },
+      "X": {
+        "type": "button",
+        "value": 3
+      },
+      "SHOULDER_LEFT": {
+        "type": "button",
+        "value": 5
+      },
+      "SHOULDER_RIGHT": {
+        "type": "button",
+        "value": 4
+      },
+      "TRIGGER_LEFT": {
+        "type": "button",
+        "value": 7
+      },
+      "TRIGGER_RIGHT": {
+        "type": "button",
+        "value": 6
+      },
+      "BACK": {
+        "type": "button",
+        "value": 20
+      },
+      "START": {
+        "type": "button",
+        "value": 19
+      },
+      "STICK_L_CLICK": {
+        "type": "button",
+        "value": 11
+      },
+      "STICK_R_CLICK": {
+        "type": "button",
+        "value": 10
+      },
+      "D_PAD_UP": {
+        "type": "axis",
+        "action": "button_float",
+        "value": 9,
+        "active": -1.1,
+        "release": 1.4
+      },
+      "D_PAD_DOWN": {
+        "type": "axis",
+        "action": "button_float",
+        "value": 9,
+        "active": 0,
+        "release": 1.4
+      },
+      "D_PAD_LEFT": {
+        "type": "axis",
+        "action": "button_float",
+        "value": 9,
+        "active": 0.7,
+        "release": 1.4
+      },
+      "D_PAD_RIGHT": {
+        "type": "axis",
+        "action": "button_float",
+        "value": 9,
+        "active": -0.3,
+        "release": 1.4
+      },
+      "HOME": {
+        "type": "button",
+        "value": 24
+      },
+      "CAPTURE": {
+        "type": "button",
+        "value": 8
+      },
+      "LEFT_STICK_X": {
+        "type": "axis",
+        "value": 0
       }
     },
     "default": {

@@ -20,6 +20,9 @@ In the `/client` folder.
 ### Arduino
 Falsh the `.ino` file on a Arduino Leonardo,  Arduino Micro or ATmega32U4 based microcontroller.
 
+[MPU Change default axes orientation](https://www.i2cdevlib.com/forums/topic/397-change-default-axes-orientation/)
+[MPU Change default axes orientation - Git](https://github.com/HackerLoop/Arduino-JoyCon-Library-for-Nintendo-Switch/commit/3c321113653655978776fa2f8fed0acfff2f7dc4)
+
 ### esp-link
 
 #### Flash with esptool
