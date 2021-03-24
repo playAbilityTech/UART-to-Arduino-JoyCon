@@ -446,36 +446,35 @@ function triggerAction(index, key, action, value) {
       var v = v == action.active ? 1 : 0;
       gamepads[index].setButton(key, v);
     }
-    else if (action.action == 'button_float') {
-      console.log(action);
+    else if (action.action == 'button_hat') {
+      console.log('button_hat');
+      //console.log(action);
       //var v = Math.min(Math.max(parseInt(value), 0), 1) || 0;
-      var v = Math.round(parseFloat(value) * 10) / 10;
-      console.log(v);
-      if (v == action.release) {
-        if (key.startsWith('D_PAD_')) {
-          gamepads[index].setHat("RELEASE");
-        }
-        else {
-          gamepads[index].setButton(key, 0);
-        }
+      //var v = Math.round(parseFloat(value) * 10) / 10;
+      var v = parseFloat(value);
+      console.log(action.min, v, action.max);
+      if (v > action.release_min) {
+        console.log("RELEASE", action);
+        gamepads[index].setHat("RELEASE");
       }
-      else if(v == action.active) {
-        if (key.startsWith('D_PAD_')) {
-          gamepads[index].setHat(key);
-        }
-        else {
-          gamepads[index].setButton(key, v);
-        }
+      else if (v >= action.min && v < action.max) {
+        console.log("vrai", action);
+        gamepads[index].setHat(key);
       }
     }
     else {
-      gamepads[index].setAxis(key, Utils.map(value, -0.4, 0.4, 0, 255));
+      value = smooth(value, action.deadzone);
+      gamepads[index].setAxis(key, Utils.map(value, action.min, action.max, 0, 255));
     }
   }
 }
 
+function smooth(x, deadzone) {
+  return Math.abs(x) <= deadzone ? Math.pow(x,3)/Math.pow(deadzone,2) : x;
+}
+
 function setModifier(index, modifier, value, key) {
   let set = gamepads[index].getGamepadSet();
-  gamepads[index].setModifier(modifier, set[key].type, key, set[key].value, value);
+  gamepads[index].setModifier(modifier, set[key].action || set[key].type, key, set[key].value, value);
   updateJoy(index, null, true);
 }
