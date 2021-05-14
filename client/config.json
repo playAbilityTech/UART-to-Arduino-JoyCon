@@ -22,13 +22,13 @@
     },
     {
       "serial_port": "/dev/tty.SLAB_USBtoUART4",
-      "joy_input": 0,
+      "joy_input": 1,
       "gamepad_set": "logitech_wheel_ps4",
-      "serial_enabled": false
+      "serial_enabled": true
     },
     {
-      "serial_port": "/dev/tty.usbmodemHIDPE1",
-      "joy_input": 1,
+      "serial_port": "/dev/tty.SLAB_USBtoUART",
+      "joy_input": 0,
       "gamepad_set": "logitech_wheel_ps4",
       "serial_enabled": true
     }
@@ -310,8 +310,8 @@
       "LEFT_STICK_X": {
         "type": "axis",
         "value": 0,
-        "min": -0.5,
-        "max": 0.5,
+        "min": -0.25,
+        "max": 0.25,
         "deadzone": 0.08
       }
     },
